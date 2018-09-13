@@ -38,7 +38,7 @@ public class XMLValidatorUsingTreeGrammars {
                 stateMachine.processInput(tag);
                 // als ik de rule wel kan vinden gebeurt er iets eigenaardigs.
                 // dan moet ik de boom aanpassen, maar alleen de laatste level
-                // nou ja dat is dus eigenlijk een knd aanpassen en vernagen door een adner
+                // nou ja dat is dus eigenlijk een knd aanpassen en vervangen door een ander
             }
         }
 
@@ -46,6 +46,7 @@ public class XMLValidatorUsingTreeGrammars {
 
     }
 
+    // we moeten verschillende soorten nodes gaan ondersteunen.
     private void createTransitionRules(StateMachine stateMachine) {
         // We maken de non termin al root aan. (hoofdletters)
         // Die kunen we vervagnen door ene terminal root (kleine letters) + non terminal MARKUP node
@@ -56,5 +57,9 @@ public class XMLValidatorUsingTreeGrammars {
         Tree rhs2 =  new Tree("root", Arrays.asList("MARKUP"));
         TransitionRule transitionRule1 =  new TransitionRule(lhs1, rhs2);
         stateMachine.addTransitionRule(transitionRule1);
+        Tree lhs2_1 = new Tree("MARKUP");
+        Tree rhs2_2 =  new Tree("markup", Arrays.asList("tekst"));
+        TransitionRule transitionRule2 =  new TransitionRule(lhs2_1, rhs2_2);
+        stateMachine.addTransitionRule(transitionRule2);
     }
 }
