@@ -23,7 +23,7 @@ public class XMLValidatorUsingTreeGrammars {
         // nu moet ik een state machine creeren, die van de ene naaar de andere state gaat
         // door middel van transitierules
         StateMachine stateMachine = new StateMachine();
-        createTransitionRules();
+        createTransitionRules(stateMachine);
 
         // we gaan de input af, event voor event.
 
@@ -36,6 +36,9 @@ public class XMLValidatorUsingTreeGrammars {
                 StartElement s = xmlEvent.asStartElement();
                 String tag = s.getName().getLocalPart();
                 stateMachine.processInput(tag);
+                // als ik de rule wel kan vinden gebeurt er iets eigenaardigs.
+                // dan moet ik de boom aanpassen, maar alleen de laatste level
+                // nou ja dat is dus eigenlijk een knd aanpassen en vernagen door een adner
             }
         }
 
@@ -43,8 +46,8 @@ public class XMLValidatorUsingTreeGrammars {
 
     }
 
-    private void createTransitionRules() {
-        // We maken de non terminal root aan. (hoofdletters)
+    private void createTransitionRules(StateMachine stateMachine) {
+        // We maken de non termin al root aan. (hoofdletters)
         // Die kunen we vervagnen door ene terminal root (kleine letters) + non terminal MARKUP node
         // Dit klinkt ingewikkelder dan nodig. hmm
         // de huidige state s dan meer ene tree, waarbij steeds een stukje vervangen wordt.
@@ -52,5 +55,6 @@ public class XMLValidatorUsingTreeGrammars {
         Tree lhs1 = new Tree("ROOT");
         Tree rhs2 =  new Tree("root", Arrays.asList("MARKUP"));
         TransitionRule transitionRule1 =  new TransitionRule(lhs1, rhs2);
+        stateMachine.addTransitionRule(transitionRule1);
     }
 }
