@@ -5,10 +5,10 @@
 // Een rule heeft een lefthandside (dat is een non temrinal markup node
 // Een right hand side: that is een tree.
 public class TransitionRule {
-    private Tree lefthandside;
-    Tree righthandside;
+    private TagNode lefthandside;
+    TreeContainer<TagNode> righthandside;
 
-    public TransitionRule(Tree lefthandside, Tree righthandside) {
+    public TransitionRule(TagNode lefthandside, TreeContainer<TagNode> righthandside) {
         this.lefthandside = lefthandside;
         this.righthandside = righthandside;
     }

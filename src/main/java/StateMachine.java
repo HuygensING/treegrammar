@@ -11,13 +11,14 @@ import java.util.List;
  * die je kunt vervangen.
  */
 public class StateMachine {
-    private Tree completeTree; // tree die we aan het opbouwen zijn
-    private Tree pointerToCurrentNode;
+    private TreeContainer<TagNode> completeTree; // tree die we aan het opbouwen zijn
+    private TagNode pointerToCurrentNode;
     private List<TransitionRule> rules;
 
     public StateMachine() {
-        this.completeTree = new Tree("ROOT");
-        this.pointerToCurrentNode = completeTree;
+        TagNode root = new TagNode("ROOT");
+        this.completeTree = new TreeContainer<>(root);
+        this.pointerToCurrentNode = root;
         // nu hebben we nog transitie rules nodig.
         this.rules = new ArrayList<>();
     }
@@ -60,21 +61,23 @@ public class StateMachine {
         // NB: Dit is te simplistisch.
 
         // check whether tag of right hand side is the same as the incoming tag.
-        if (theRule.righthandside.tag.equals(tag)) {
+        if (theRule.righthandside.root.tag.equals(tag)) {
             // woohoo expectations matched!
             //throw new RuntimeException("expectations are met!");
             // set the current pointer
             // aargh we now need a replace, with a parent value, which we don't have yet
             // het gebeuren hier is wat moeilijk, want het kan zijn dat de root vervangen wordt..
             TransitionRule finalTheRule = theRule;
-            pointerToCurrentNode.parent.ifPresent(t -> t.replaceChild(pointerToCurrentNode, finalTheRule.righthandside));
-            // als het om de root node gaat.
-            if (!pointerToCurrentNode.parent.isPresent()) {
+
+            // als het om de root node gaat vervangen we gewoon de hele tree
+            if (pointerToCurrentNode == completeTree.root) {
                 System.out.println("Het is de root we gaan er voor!");
                 completeTree = finalTheRule.righthandside;
+            } else {
+                completeTree.mergeTreeIntoCurrentTree(finalTheRule.righthandside, pointerToCurrentNode);
             }
             // gaat dit altijd goed... we will see
-            pointerToCurrentNode = finalTheRule.righthandside.children.get(0);
+            pointerToCurrentNode = finalTheRule.righthandside.children.get(finalTheRule.righthandside.root).get(0);
         }
 
 

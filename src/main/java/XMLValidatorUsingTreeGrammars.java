@@ -53,12 +53,12 @@ public class XMLValidatorUsingTreeGrammars {
         // Dit klinkt ingewikkelder dan nodig. hmm
         // de huidige state s dan meer ene tree, waarbij steeds een stukje vervangen wordt.
         // Tree zou je eigenlijk een kunnen aanmaken op basis van een string, maar ja nu even niet.
-        Tree lhs1 = new Tree("ROOT");
-        Tree rhs2 =  new Tree("root", Arrays.asList("MARKUP"));
+        TagNode lhs1 = new TagNode("ROOT");
+        TreeContainer<TagNode> rhs2 =  new TreeContainer<>(new TagNode("root"), Arrays.asList(new TagNode("MARKUP")));
         TransitionRule transitionRule1 =  new TransitionRule(lhs1, rhs2);
         stateMachine.addTransitionRule(transitionRule1);
-        Tree lhs2_1 = new Tree("MARKUP");
-        Tree rhs2_2 =  new Tree("markup", Arrays.asList("tekst"));
+        TagNode lhs2_1 = new TagNode("MARKUP");
+        TreeContainer<TagNode> rhs2_2 =  new TreeContainer<TagNode>(new TagNode("markup"), Arrays.asList(new TagNode("tekst")));
         TransitionRule transitionRule2 =  new TransitionRule(lhs2_1, rhs2_2);
         stateMachine.addTransitionRule(transitionRule2);
     }
