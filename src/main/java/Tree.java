@@ -1,64 +1,56 @@
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /*
-// * author: Ronald Haentjens Dekker
-// * date: 11-09-2018
- * This class is the tree and the tree node, depending on how you look at it
- * Since trees are recursive and stuff.
+/* author: Ronald Haentjens Dekker
+ * v1: date: 11-09-2018
+ * v2: Created on 28/09/18.
+ *
+ * Just like with graphs we create a container class for trees.
+ * Instead of specifying what kind of nodes are used we specify how to put things in the tree.
+ * This makes it easier to specify the root.
+ * Also it makes it easier to merge two trees etc.
  */
-public class Tree {
-    final String tag;
-    final List<Tree> children;
-    // een optional als private field hebben schijnt eigenlijk niet goed te zijn.
-    final Optional<Tree> parent;
+class Tree<T> {
+    final T root;
+    // Every node in the tree has a list of children
+    final Map<T, List<T>> children;
+    // Every node has one parent; this map maps the node to the parent; so reverse
+    private final Map<T, T> parents;
 
-
-    // Zoveel constructors joh...
-    public Tree(String tag) {
-        this.tag = tag;
-        this.children = new ArrayList<>();
-        this.parent = Optional.empty();
-    }
-
-    public Tree(String tag, Tree parent) {
-        this.tag = tag;
-        this.children = new ArrayList<>();
-        this.parent = Optional.of(parent);
-    }
-
-    // als ik die twee trees merge, dan moet ik parent natuurlijk wel zetten!
-    // ah shit een echte graph class gaat dan wel beter worden!
-    // nou ja we zien het zo wel!
-    public Tree(String root, List<String> markup) {
-        this.tag = root;
-        this.parent = Optional.empty();
-        // convert T to tree nodes
-        List<Tree> tempList = new ArrayList<>();
-        for (String m : markup) {
-            tempList.add(new Tree(m));
+    public Tree(T root) {
+        this.root = root;
+        this.children = new HashMap<>();
+        this.parents = new HashMap<>();
         }
-        this.children = tempList;
+
+    public Tree(T root, List<T> children) {
+        this.root = root;
+        this.children = new HashMap<>();
+        this.parents = new HashMap<>();
+        // new ArrayList is to container the Arrays.asList
+        this.children.put(root, new ArrayList<>(children));
+        for (T child : children) {
+        parents.put(child, root);
+        }
+        }
+
+    public void connect(T parent, T child) {
+        children.putIfAbsent(parent, new ArrayList<T>());
+        children.get(parent).add(child);
+        parents.put(child, parent);
+        }
+
+    public void mergeTreeIntoCurrentTree(Tree<T> toMerge, T nodeToReplace) {
+        // Copy the children map from the tree container to merge, and connect the parent of the node to replace
+        // with the root of the tree to merge
+        this.children.putAll(toMerge.children);
+        this.parents.putAll(toMerge.parents);
+        T parent = parents.get(nodeToReplace);
+        connect(parent, toMerge.root);
     }
 
     @Override
     public String toString() {
-        return tag + "{ say something here about the children }";
+        return root.toString();
     }
-
-    // I am doing this all wrong!
-    public void replaceChild(Tree orig, Tree replace) {
-        // Ik moet de child zien te vinden...
-        // dat moet ik nu door een list af te gaan.
-        // Een insertation ordered map zou hier beter zijn.
-        int i = children.indexOf(orig);
-        children.remove(i);
-        children.add(i, replace);
-
-    }
-
-
-    // het zou beter zijn om de container (tree) te onderscheiden van de node (dat zou dan zelfs een string kunnen zijn;
-    // hoewel strings herhaald kinnen woden. nou ja een simple bakje met waarden dan.
 }

@@ -11,13 +11,13 @@ import java.util.List;
  * die je kunt vervangen.
  */
 public class StateMachine {
-    private TreeContainer<TagNode> completeTree; // tree die we aan het opbouwen zijn
+    private Tree<TagNode> completeTree; // tree die we aan het opbouwen zijn
     private TagNode pointerToCurrentNode;
     private List<TransitionRule> rules;
 
     public StateMachine() {
         TagNode root = new TagNode("ROOT");
-        this.completeTree = new TreeContainer<>(root);
+        this.completeTree = new Tree<>(root);
         this.pointerToCurrentNode = root;
         // nu hebben we nog transitie rules nodig.
         this.rules = new ArrayList<>();

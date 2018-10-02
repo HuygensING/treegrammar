@@ -7,4 +7,9 @@ public class TagNode {
     public TagNode(String tag) {
         this.tag = tag;
     }
+
+    @Override
+    public String toString() {
+        return tag + "{ say something here about the children }";
+    }
 }

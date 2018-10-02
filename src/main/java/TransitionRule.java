@@ -2,13 +2,13 @@
 // * author: Ronald Haentjens Dekker
 // * date: 11-09-2018
 //\
-// Een rule heeft een lefthandside (dat is een non temrinal markup node
+// Een rule heeft een lefthandside (dat is een non terminal markup node
 // Een right hand side: that is een tree.
 public class TransitionRule {
     private TagNode lefthandside;
-    TreeContainer<TagNode> righthandside;
+    Tree<TagNode> righthandside;
 
-    public TransitionRule(TagNode lefthandside, TreeContainer<TagNode> righthandside) {
+    public TransitionRule(TagNode lefthandside, Tree<TagNode> righthandside) {
         this.lefthandside = lefthandside;
         this.righthandside = righthandside;
     }
