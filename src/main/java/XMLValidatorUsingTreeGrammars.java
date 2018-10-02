@@ -14,10 +14,7 @@ public class XMLValidatorUsingTreeGrammars {
 
     public void parse(String XML_input) throws XMLStreamException {
         // hier maken we een stax parser aan die de XML in stukjes binnen laat komen
-
         XMLInputFactory factory = XMLInputFactory.newInstance();
-        System.out.println("FACTORY: " + factory);
-
         XMLEventReader reader = factory.createXMLEventReader(new StringReader(XML_input));
 
         // nu moet ik een state machine creeren, die van de ene naaar de andere state gaat
@@ -26,8 +23,6 @@ public class XMLValidatorUsingTreeGrammars {
         createTransitionRules(stateMachine);
 
         // we gaan de input af, event voor event.
-
-
         while (reader.hasNext()) {
             XMLEvent xmlEvent = reader.nextEvent();
             System.out.println(xmlEvent);
@@ -58,7 +53,7 @@ public class XMLValidatorUsingTreeGrammars {
         TransitionRule transitionRule1 =  new TransitionRule(lhs1, rhs2);
         stateMachine.addTransitionRule(transitionRule1);
         TagNode lhs2_1 = new TagNode("MARKUP");
-        Tree<TagNode> rhs2_2 =  new Tree<TagNode>(new TagNode("markup"), Arrays.asList(new TagNode("tekst")));
+        Tree<TagNode> rhs2_2 =  new Tree<>(new TagNode("markup"), Arrays.asList(new TagNode("tekst")));
         TransitionRule transitionRule2 =  new TransitionRule(lhs2_1, rhs2_2);
         stateMachine.addTransitionRule(transitionRule2);
     }

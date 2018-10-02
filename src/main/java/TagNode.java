@@ -10,6 +10,6 @@ public class TagNode {
 
     @Override
     public String toString() {
-        return tag + "{ say something here about the children }";
+        return tag ;
     }
 }

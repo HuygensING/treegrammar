@@ -21,7 +21,7 @@ class Tree<T> {
         this.root = root;
         this.children = new HashMap<>();
         this.parents = new HashMap<>();
-        }
+    }
 
     public Tree(T root, List<T> children) {
         this.root = root;
@@ -30,15 +30,15 @@ class Tree<T> {
         // new ArrayList is to container the Arrays.asList
         this.children.put(root, new ArrayList<>(children));
         for (T child : children) {
-        parents.put(child, root);
+            parents.put(child, root);
         }
-        }
+    }
 
     public void connect(T parent, T child) {
         children.putIfAbsent(parent, new ArrayList<T>());
         children.get(parent).add(child);
         parents.put(child, parent);
-        }
+    }
 
     public void mergeTreeIntoCurrentTree(Tree<T> toMerge, T nodeToReplace) {
         // Copy the children map from the tree container to merge, and connect the parent of the node to replace
@@ -49,8 +49,16 @@ class Tree<T> {
         connect(parent, toMerge.root);
     }
 
+    // NOTE: The toString method goes only one level deep
     @Override
     public String toString() {
-        return root.toString();
+        StringBuffer result = new StringBuffer();
+        result.append(root.toString());
+        result.append("{");
+        for (T child : children.get(root)) {
+            result.append(child.toString());
+        }
+        result.append("}");
+        return result.toString();
     }
 }

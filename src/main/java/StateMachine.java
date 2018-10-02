@@ -71,7 +71,6 @@ public class StateMachine {
 
             // als het om de root node gaat vervangen we gewoon de hele tree
             if (pointerToCurrentNode == completeTree.root) {
-                System.out.println("Het is de root we gaan er voor!");
                 completeTree = finalTheRule.righthandside;
             } else {
                 completeTree.mergeTreeIntoCurrentTree(finalTheRule.righthandside, pointerToCurrentNode);
