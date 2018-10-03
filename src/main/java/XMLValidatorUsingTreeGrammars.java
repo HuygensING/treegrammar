@@ -17,7 +17,7 @@ public class XMLValidatorUsingTreeGrammars {
         XMLInputFactory factory = XMLInputFactory.newInstance();
         XMLEventReader reader = factory.createXMLEventReader(new StringReader(XML_input));
 
-        // nu moet ik een state machine creeren, die van de ene naaar de andere state gaat
+        // nu moet ik een state machine creeren, die van de ene naar de andere state gaat
         // door middel van transitierules
         StateMachine stateMachine = new StateMachine();
         createTransitionRules(stateMachine);
@@ -33,7 +33,7 @@ public class XMLValidatorUsingTreeGrammars {
                 stateMachine.processInput(tag);
                 // als ik de rule wel kan vinden gebeurt er iets eigenaardigs.
                 // dan moet ik de boom aanpassen, maar alleen de laatste level
-                // nou ja dat is dus eigenlijk een knd aanpassen en vervangen door een ander
+                // nou ja dat is dus eigenlijk een kind aanpassen en vervangen door een ander
             }
         }
 
@@ -43,17 +43,27 @@ public class XMLValidatorUsingTreeGrammars {
 
     // we moeten verschillende soorten nodes gaan ondersteunen.
     private void createTransitionRules(StateMachine stateMachine) {
-        // We maken de non termin al root aan. (hoofdletters)
-        // Die kunen we vervagnen door ene terminal root (kleine letters) + non terminal MARKUP node
+        // We maken de non-terminal root aan. (hoofdletters)
+        // Die kunen we vervangen door een terminal root (kleine letters) + non-terminal MARKUP node
         // Dit klinkt ingewikkelder dan nodig. hmm
-        // de huidige state s dan meer ene tree, waarbij steeds een stukje vervangen wordt.
+        // de huidige state is dan meer een tree, waarbij steeds een stukje vervangen wordt.
         // Tree zou je eigenlijk een kunnen aanmaken op basis van een string, maar ja nu even niet.
+
+        // 0 => ROOT
+        Node lhs0 = new StartNode();
+        Tree<Node> rhs0 =  new Tree<>(new TagNode("ROOT"));
+        TransitionRule transitionRule0 =  new TransitionRule(lhs0, rhs0);
+        stateMachine.addTransitionRule(transitionRule0);
+
+        // ROOT => root[MARKUP]
         TagNode lhs1 = new TagNode("ROOT");
-        Tree<TagNode> rhs2 =  new Tree<>(new TagNode("root"), Arrays.asList(new TagNode("MARKUP")));
+        Tree<Node> rhs2 =  new Tree<>(new TagNode("root"), Arrays.asList(new TagNode("MARKUP")));
         TransitionRule transitionRule1 =  new TransitionRule(lhs1, rhs2);
         stateMachine.addTransitionRule(transitionRule1);
+
+        // MARKUP => markup[tekst]
         TagNode lhs2_1 = new TagNode("MARKUP");
-        Tree<TagNode> rhs2_2 =  new Tree<>(new TagNode("markup"), Arrays.asList(new TagNode("tekst")));
+        Tree<Node> rhs2_2 =  new Tree<>(new TagNode("markup"), Arrays.asList(new TagNode("tekst")));
         TransitionRule transitionRule2 =  new TransitionRule(lhs2_1, rhs2_2);
         stateMachine.addTransitionRule(transitionRule2);
     }
