@@ -56,7 +56,7 @@ class Tree<T> {
   // NOTE: The toString method goes only one level deep
   @Override
   public String toString() {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     result.append(root.toString());
     result.append("{");
     for (T child : children.get(root)) {
