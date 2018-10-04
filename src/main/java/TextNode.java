@@ -12,4 +12,9 @@ public class TextNode implements Node {
   public String toString() {
     return "\"" + content + "\"";
   }
+
+  @Override
+  public boolean matches(Node node) {
+    return node instanceof TextNode && ((TextNode) node).content.equals(content);
+  }
 }

@@ -12,4 +12,9 @@ public class TagNode implements Node {
   public String toString() {
     return "[" + tag + "]";
   }
+
+  @Override
+  public boolean matches(Node node) {
+    return node instanceof TagNode && ((TagNode) node).tag.equals(tag);
+  }
 }

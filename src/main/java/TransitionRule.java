@@ -1,3 +1,4 @@
+import java.util.Optional;
 
 // * author: Ronald Haentjens Dekker
 // * date: 11-09-2018
@@ -13,13 +14,34 @@ public class TransitionRule {
     this.righthandside = righthandside;
   }
 
-  public boolean lefthandsideIsApplicableFor(String tag) {
+  public boolean lefthandsideIsApplicableFor(Node node) {
     // System.out.println("Checking with "+lefthandside.tag+" and "+tag);
     // de lefthandside is een tree node zonder kinderen...
     // We kijken of de tag vergelijkbaar is
-    if (((TagNode) lefthandside).tag.equals(tag)) {
-      return true;
+    return lefthandside.matches(node);
+  }
+
+  @Override
+  public String toString() {
+    return lefthandside + " => " + righthandside;
+  }
+
+  public Optional<Node> firstNonTerminalNode() {
+    if (righthandside.root instanceof NonTerminalNode) {
+      return Optional.of(righthandside.root);
     }
-    return false;
+    return righthandside.children.get(righthandside.root)
+        .stream()
+        .filter(NonTerminalNode.class::isInstance)
+        .findFirst();
+  }
+
+  boolean hasNoRHSTerminals() {
+    if (!(righthandside.root instanceof NonTerminalNode)) {
+      return false;
+    }
+    return righthandside.children.get(righthandside.root)
+        .stream()
+        .allMatch(NonTerminalNode.class::isInstance);
   }
 }
