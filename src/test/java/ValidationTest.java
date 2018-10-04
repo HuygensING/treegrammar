@@ -20,7 +20,7 @@ public class ValidationTest {
   }
 
   @Test
-  public void testXMLDoesNotParse() throws XMLStreamException {
+  public void testXMLDoesNotParse() {
     XMLValidatorUsingTreeGrammars validator = new XMLValidatorUsingTreeGrammars();
     try {
       validator.parse("<root><markup>tekst and <b>more</b> markup</markup></root>");
