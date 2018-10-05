@@ -10,7 +10,7 @@ import java.util.Optional;
 // Een rule heeft een lefthandside (dat is een non terminal markup node
 // Een right hand side: that is een tree.
 public class TransitionRule {
-  private NonTerminalNode lefthandside;
+  NonTerminalNode lefthandside;
   Tree<Node> righthandside;
 
   public TransitionRule(NonTerminalNode lefthandside, Tree<Node> righthandside) {

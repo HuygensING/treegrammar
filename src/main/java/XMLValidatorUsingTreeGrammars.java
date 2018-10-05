@@ -8,12 +8,18 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.io.StringReader;
+import java.util.List;
 
 import static java.util.Arrays.asList;
 
 // * author: Ronald Haentjens Dekker
 // * date: 11-09-2018
 public class XMLValidatorUsingTreeGrammars {
+  private final StateMachine stateMachine = new StateMachine();
+
+  XMLValidatorUsingTreeGrammars(List<TransitionRule> transitionRules) {
+    transitionRules.forEach(stateMachine::addTransitionRule);
+  }
 
   public void parse(String XML_input) throws XMLStreamException {
     // hier maken we een stax parser aan die de XML in stukjes binnen laat komen
@@ -22,8 +28,6 @@ public class XMLValidatorUsingTreeGrammars {
 
     // nu moet ik een state machine creeren, die van de ene naar de andere state gaat
     // door middel van transitierules
-    StateMachine stateMachine = new StateMachine();
-    createTransitionRules(stateMachine);
 
     // we gaan de input af, event voor event.
     while (reader.hasNext()) {
@@ -46,34 +50,42 @@ public class XMLValidatorUsingTreeGrammars {
       }
       System.out.println();
     }
-
-
   }
 
   // we moeten verschillende soorten nodes gaan ondersteunen.
-  private void createTransitionRules(StateMachine stateMachine) {
+  private void createTransitionRules() {
     // We maken de non-terminal root aan. (hoofdletters)
     // Die kunen we vervangen door een terminal root (kleine letters) + non-terminal MARKUP node
     // Dit klinkt ingewikkelder dan nodig. hmm
     // de huidige state is dan meer een tree, waarbij steeds een stukje vervangen wordt.
     // Tree zou je eigenlijk een kunnen aanmaken op basis van een string, maar ja nu even niet.
 
-    // 0 => ROOT
+    // {} => {ROOT}
     NonTerminalNode lhs0 = new StartNode();
     Tree<Node> rhs0 = new Tree<>(new NonTerminalMarkupNode("ROOT"));
     TransitionRule transitionRule0 = new TransitionRule(lhs0, rhs0);
     stateMachine.addTransitionRule(transitionRule0);
 
-    // ROOT => root[MARKUP]
+    // {ROOT} => (root)[{MARKUP}]
     NonTerminalNode lhs1 = new NonTerminalMarkupNode("ROOT");
     Tree<Node> rhs1 = new Tree<>(new TagNode("root"), asList(new NonTerminalMarkupNode("MARKUP")));
     TransitionRule transitionRule1 = new TransitionRule(lhs1, rhs1);
     stateMachine.addTransitionRule(transitionRule1);
 
-    // MARKUP => markup[tekst]
+    // {MARKUP} => (markup)["*"]
     NonTerminalNode lhs2 = new NonTerminalMarkupNode("MARKUP");
     Tree<Node> rhs2 = new Tree<>(new TagNode("markup"), asList(new AnyTextNode()));
     TransitionRule transitionRule2 = new TransitionRule(lhs2, rhs2);
     stateMachine.addTransitionRule(transitionRule2);
   }
+
+  // De graph die we willen construeren telt uiteindelijk (als het parsen succesvol beëindigd is) alleen TerminalNodes: Markup en Text (TerminalNodes)
+  // Tijdens het parsen kan de graph ook nog NonTerminalNodes bevatten
+  // Voor een serialisatie van de transition rules moeten we kunnen aangeven of het om een TerminalNode of NonTerminalNode gaat
+  // {} : start symbol
+  // {NODE} : NonTerminal Markup Node
+  // (node) : Terminal markup node
+  // /.*/ :  NonTerminal text node
+  // "text" Terminal text node
+  // [(node1) (node2) ] : 2 child nodes
 }

@@ -1,8 +1,5 @@
 package nodes;
 
-/**
- * Created by ronalddekker on 28/09/18.
- */
 public class StartNode implements NonTerminalNode {
 
   public StartNode() {
