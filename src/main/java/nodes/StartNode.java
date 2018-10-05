@@ -1,19 +1,20 @@
+package nodes;
+
 /**
  * Created by ronalddekker on 28/09/18.
  */
-public class AnyTextNode extends TextNode {
+public class StartNode implements NonTerminalNode {
 
-  public AnyTextNode() {
-    super("*");
+  public StartNode() {
   }
 
   @Override
   public String toString() {
-    return "/.*/";
+    return "{start}";
   }
 
   @Override
   public boolean matches(Node node) {
-    return node instanceof TextNode;
+    return node instanceof StartNode;
   }
 }

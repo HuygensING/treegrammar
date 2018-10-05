@@ -1,10 +1,12 @@
+package nodes;
+
 /**
  * Created by ronalddekker on 28/09/18.
  */
-public class NonTerminalNode implements Node {
+public class NonTerminalMarkupNode implements NonTerminalNode {
   final String variableName;
 
-  public NonTerminalNode(String variableName) {
+  public NonTerminalMarkupNode(String variableName) {
     this.variableName = variableName;
   }
 
@@ -15,7 +17,7 @@ public class NonTerminalNode implements Node {
 
   @Override
   public boolean matches(Node node) {
-    return (node instanceof NonTerminalNode && ((NonTerminalNode) node).variableName.equals(variableName))
+    return (node instanceof NonTerminalMarkupNode && ((NonTerminalMarkupNode) node).variableName.equals(variableName))
         || (node instanceof TagNode);
   }
 }

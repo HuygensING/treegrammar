@@ -1,5 +1,7 @@
 
 
+import nodes.*;
+
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -39,7 +41,7 @@ public class XMLValidatorUsingTreeGrammars {
 //      } else if (xmlEvent.isCharacters()) {
 //        Characters characters = xmlEvent.asCharacters();
 //        String content = characters.toString();
-//        Node textNode = new TextNode(content);
+//        nodes.Node textNode = new nodes.TextNode(content);
 //        stateMachine.processInput(textNode);
       }
       System.out.println();
@@ -57,19 +59,19 @@ public class XMLValidatorUsingTreeGrammars {
     // Tree zou je eigenlijk een kunnen aanmaken op basis van een string, maar ja nu even niet.
 
     // 0 => ROOT
-    Node lhs0 = new StartNode();
-    Tree<Node> rhs0 = new Tree<>(new NonTerminalNode("ROOT"));
+    NonTerminalNode lhs0 = new StartNode();
+    Tree<Node> rhs0 = new Tree<>(new NonTerminalMarkupNode("ROOT"));
     TransitionRule transitionRule0 = new TransitionRule(lhs0, rhs0);
     stateMachine.addTransitionRule(transitionRule0);
 
     // ROOT => root[MARKUP]
-    Node lhs1 = new NonTerminalNode("ROOT");
-    Tree<Node> rhs1 = new Tree<>(new TagNode("root"), asList(new NonTerminalNode("MARKUP")));
+    NonTerminalNode lhs1 = new NonTerminalMarkupNode("ROOT");
+    Tree<Node> rhs1 = new Tree<>(new TagNode("root"), asList(new NonTerminalMarkupNode("MARKUP")));
     TransitionRule transitionRule1 = new TransitionRule(lhs1, rhs1);
     stateMachine.addTransitionRule(transitionRule1);
 
     // MARKUP => markup[tekst]
-    Node lhs2 = new NonTerminalNode("MARKUP");
+    NonTerminalNode lhs2 = new NonTerminalMarkupNode("MARKUP");
     Tree<Node> rhs2 = new Tree<>(new TagNode("markup"), asList(new AnyTextNode()));
     TransitionRule transitionRule2 = new TransitionRule(lhs2, rhs2);
     stateMachine.addTransitionRule(transitionRule2);

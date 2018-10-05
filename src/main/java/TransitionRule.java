@@ -1,3 +1,7 @@
+import nodes.Node;
+import nodes.NonTerminalNode;
+import nodes.TerminalNode;
+
 import java.util.Optional;
 
 // * author: Ronald Haentjens Dekker
@@ -6,10 +10,10 @@ import java.util.Optional;
 // Een rule heeft een lefthandside (dat is een non terminal markup node
 // Een right hand side: that is een tree.
 public class TransitionRule {
-  private Node lefthandside;
+  private NonTerminalNode lefthandside;
   Tree<Node> righthandside;
 
-  public TransitionRule(Node lefthandside, Tree<Node> righthandside) {
+  public TransitionRule(NonTerminalNode lefthandside, Tree<Node> righthandside) {
     this.lefthandside = lefthandside;
     this.righthandside = righthandside;
   }
@@ -37,11 +41,11 @@ public class TransitionRule {
   }
 
   boolean hasNoRHSTerminals() {
-    if (!(righthandside.root instanceof NonTerminalNode)) {
+    if (righthandside.root instanceof TerminalNode) {
       return false;
     }
     return righthandside.children.get(righthandside.root)
         .stream()
-        .allMatch(NonTerminalNode.class::isInstance);
+        .noneMatch(TerminalNode.class::isInstance);
   }
 }

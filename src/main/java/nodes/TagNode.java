@@ -1,7 +1,9 @@
+package nodes;
+
 /**
  * Created by ronalddekker on 28/09/18.
  */
-public class TagNode implements Node {
+public class TagNode implements TerminalNode {
   final String tag;
 
   public TagNode(String tag) {

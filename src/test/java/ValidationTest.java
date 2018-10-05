@@ -26,7 +26,7 @@ public class ValidationTest {
       validator.parse("<root><markup>tekst and <b>more</b> markup</markup></root>");
       fail("Expected an exception");
     } catch (Exception e) {
-      assertThat(e).hasMessage("No transition rule found! Current state: null -> [b]");
+      assertThat(e).hasMessage("No transition rule found! Current state: /.*/ -> [b]");
     }
   }
 }
