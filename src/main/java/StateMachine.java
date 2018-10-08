@@ -88,4 +88,8 @@ public class StateMachine {
     // we gaan alle transitierules af.
     // het zou beter zijn om dit te indexeren; maar ok..
   }
+
+  public Tree<Node> getTree() {
+    return completeTree;
+  }
 }

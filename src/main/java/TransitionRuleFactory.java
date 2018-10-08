@@ -48,7 +48,10 @@ public class TransitionRuleFactory {
       String content = nodeSerialization.replaceAll("[\\{\\}]", "");
       return new NonTerminalMarkupNode(content);
     }
-    return null;
+    if (nodeSerialization.startsWith("\"")) {
+      return new AnyTextNode();
+    }
+    throw new RuntimeException("Unexpected node in transition rule: " + nodeSerialization);
   }
 
 }

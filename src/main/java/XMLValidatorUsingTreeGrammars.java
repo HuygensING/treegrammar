@@ -88,4 +88,8 @@ public class XMLValidatorUsingTreeGrammars {
   // /.*/ :  NonTerminal text node
   // "text" Terminal text node
   // [(node1) (node2) ] : 2 child nodes
+
+  public Tree<Node> getTree(){
+    return stateMachine.getTree();
+  }
 }
