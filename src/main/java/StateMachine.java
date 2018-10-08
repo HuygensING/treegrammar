@@ -1,3 +1,4 @@
+import nodes.AnyTextNode;
 import nodes.Node;
 import nodes.StartNode;
 
@@ -38,15 +39,22 @@ public class StateMachine {
   // input zou eigenlijk tree moeten zijn.
   public void processInput(Node node) {
     System.out.println("processInput(" + node + ")");
+
     // We zoeken eerst op naar welke node de huidige pointer verwijst.
     // Dan kijken we welke transitierules er zijn voor dat type node.
+    if (pointerToCurrentNode instanceof AnyTextNode) {
+      if (!pointerToCurrentNode.matches(node)) {
+        throw new RuntimeException("Expected text node, but got " + node);
+      }
+      return;
+    }
     List<TransitionRule> applicableRules = rules.stream()
         .filter(rule -> rule.lefthandsideIsApplicableFor(pointerToCurrentNode))
         .collect(toList());
 
     System.out.println("applicableRules=" + applicableRules);
     if (applicableRules.isEmpty()) {
-      throw new RuntimeException("No transition rule found! Current state: " + this.pointerToCurrentNode + " -> " + node);
+      throw new RuntimeException("No transition rule found! Current state: " + node + ", expected: " + this.pointerToCurrentNode);
     }
     TransitionRule theRule = applicableRules.get(0);
     System.out.println("Transition rule found: " + theRule + "! We want to know the right hand side");
@@ -81,7 +89,7 @@ public class StateMachine {
         processInput(node);
       }
     } else {
-      throw new RuntimeException("no match: found " + node + ", expected " + theRule.righthandside.root);
+      throw new RuntimeException("No match: expected " + theRule.righthandside.root + " but found " + node);
     }
     //! Dan gaan we opzoek naar de transitierule van de huidige state
     //! Gegeven de transitierule en de nieuwe op basis van de input.

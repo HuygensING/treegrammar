@@ -1,10 +1,9 @@
-
-
 import nodes.*;
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.Characters;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.io.StringReader;
@@ -37,16 +36,17 @@ public class XMLValidatorUsingTreeGrammars {
       if (xmlEvent.isStartElement()) {
         StartElement s = xmlEvent.asStartElement();
         String tag = s.getName().getLocalPart();
-        Node node = new TagNode(tag);
-        stateMachine.processInput(node);
+        Node tagNode = new TagNode(tag);
+        stateMachine.processInput(tagNode);
         // als ik de rule wel kan vinden gebeurt er iets eigenaardigs.
         // dan moet ik de boom aanpassen, maar alleen de laatste level
         // nou ja dat is dus eigenlijk een kind aanpassen en vervangen door een ander
-//      } else if (xmlEvent.isCharacters()) {
-//        Characters characters = xmlEvent.asCharacters();
-//        String content = characters.toString();
-//        nodes.Node textNode = new nodes.TextNode(content);
-//        stateMachine.processInput(textNode);
+
+      } else if (xmlEvent.isCharacters()) {
+        Characters characters = xmlEvent.asCharacters();
+        String content = characters.toString();
+        nodes.Node textNode = new nodes.TextNode(content);
+        stateMachine.processInput(textNode);
       }
       System.out.println();
     }
@@ -87,9 +87,9 @@ public class XMLValidatorUsingTreeGrammars {
   // (node) : Terminal markup node
   // /.*/ :  NonTerminal text node
   // "text" Terminal text node
-  // [(node1) (node2) ] : 2 child nodes
+  // [(node1), (node2) ] : 2 child nodes
 
-  public Tree<Node> getTree(){
+  public Tree<Node> getTree() {
     return stateMachine.getTree();
   }
 }
