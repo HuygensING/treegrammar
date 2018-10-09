@@ -11,13 +11,13 @@ public class NonTerminalMarkupNode implements NonTerminalNode {
   }
 
   @Override
-  public String toString() {
-    return "[" + variableName + "]";
-  }
-
-  @Override
   public boolean matches(Node node) {
     return (node instanceof NonTerminalMarkupNode && ((NonTerminalMarkupNode) node).variableName.equals(variableName))
         || (node instanceof TagNode);
+  }
+
+  @Override
+  public String toString() {
+    return "{" + variableName + "}";
   }
 }

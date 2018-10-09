@@ -30,7 +30,7 @@ public class ValidationTest {
       validator.parse("<root><markup>tekst and <b>more</b> markup</markup></root>");
       fail("Expected an exception");
     } catch (Exception e) {
-      assertThat(e).hasMessage("Expected text node, but got <b>");
+      assertThat(e).hasMessage("Expected text node, but got (b)");
     }
   }
 
@@ -41,7 +41,7 @@ public class ValidationTest {
       validator.parse("<root>plain tekst and <markup>marked-up tekst</markup></root>");
       fail("Expected an exception");
     } catch (Exception e) {
-      assertThat(e).hasMessage("No match: expected <markup> but found \"plain tekst and \"");
+      assertThat(e).hasMessage("No match: expected (markup) but found \"plain tekst and \"");
     }
   }
 

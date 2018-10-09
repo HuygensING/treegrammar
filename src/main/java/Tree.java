@@ -58,11 +58,11 @@ class Tree<T> {
   public String toString() {
     StringBuilder result = new StringBuilder();
     result.append(root.toString());
-    result.append("{");
+    result.append("[");
     for (T child : children.get(root)) {
       result.append(child.toString());
     }
-    result.append("}");
+    result.append("]");
     return result.toString();
   }
 }

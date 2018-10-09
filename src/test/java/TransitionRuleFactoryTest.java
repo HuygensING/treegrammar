@@ -3,6 +3,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -85,12 +87,60 @@ class TransitionRuleFactoryTest {
     assertParsingFailsWithExceptionMessage(input, expectedExceptionMessage);
   }
 
+  @Test
+  public void testCycleDetection() {
+    String[] rules = {
+        "{} => {NAME}",
+        "{NAME} => (name)[{FIRST},{LAST}]",
+        "{FIRST} => (first)[\"*\"]",
+        "{LAST} => (last)[{NAME}]" // cycle!
+    };
+    final String expectedExceptionMessage = "This transition rule introduces a cycle:\n" +
+        "{LAST} => (last)[{NAME}]";
+    assertValidationFailsWithExceptionMessage(rules, expectedExceptionMessage);
+  }
+
+  @Test
+  public void thereShouldBeAStartNodeTransitionRule() {
+    String[] rules = {
+        "{NAME} => (name)[{FIRST},{LAST}]",
+        "{FIRST} => (first)[\"*\"]",
+        "{LAST} => (last)[\"*\"]"
+    };
+    final String expectedExceptionMessage = "No startnode transition rule ({} => ...) found!";
+    assertValidationFailsWithExceptionMessage(rules, expectedExceptionMessage);
+  }
+
+  @Test
+  public void everyNonTerminalShouldTerminateEventually() {
+    String[] rules = {
+        "{} => {NAME}",
+        "{NAME} => (name)[{FIRST},{LAST}]",
+        "{FIRST} => (first)[\"*\"]" // {LAST} does not terminate
+    };
+    final String expectedExceptionMessage = "No terminating transition rules found for {LAST}";
+    assertValidationFailsWithExceptionMessage(rules, expectedExceptionMessage);
+  }
+
+  private void assertValidationFailsWithExceptionMessage(final String[] rules, final String expectedExceptionMessage) {
+    List<TransitionRule> ruleSet = stream(rules)
+        .map(TransitionRuleFactory::fromString)
+        .collect(toList());
+    try {
+      TransitionRuleFactory.validateRuleSet(ruleSet);
+      fail("expected a TransitionRuleSetValidationException with message: " + expectedExceptionMessage);
+    } catch (TransitionRuleSetValidationException e) {
+      assertThat(e).hasMessage(expectedExceptionMessage);
+    }
+  }
+
   private void assertParsingFailsWithExceptionMessage(String input, String expectedExceptionMessage) {
     try {
       TransitionRule tr = TransitionRuleFactory.fromString(input);
-      fail("expected a TransitionRuleParseException");
+      fail("expected a TransitionRuleParseException with message: " + expectedExceptionMessage);
     } catch (TransitionRuleParseException e) {
       assertThat(e).hasMessage(expectedExceptionMessage);
     }
   }
+
 }

@@ -12,7 +12,7 @@ public class TagNode implements TerminalNode {
 
   @Override
   public String toString() {
-    return "<" + tag + ">";
+    return "(" + tag + ")";
   }
 
   @Override

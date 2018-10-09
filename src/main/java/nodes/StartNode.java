@@ -7,7 +7,7 @@ public class StartNode implements NonTerminalNode {
 
   @Override
   public String toString() {
-    return "{start}";
+    return "{}";
   }
 
   @Override
