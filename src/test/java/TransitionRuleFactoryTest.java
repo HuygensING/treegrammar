@@ -122,6 +122,22 @@ class TransitionRuleFactoryTest {
     assertValidationFailsWithExceptionMessage(rules, expectedExceptionMessage);
   }
 
+  @Test
+  public void allTransactionRulesShouldBeReachableFromTheStartNode() {
+    String[] rules = {
+        "{} => {NAME}",
+        "{NAME} => (name)[{FIRST},{LAST}]",
+        "{FIRST} => (first)[\"*\"]",
+        "{LAST} => (last)[\"*\"]",
+        "{HELLO} => (hello)[{OH}, \"*\"]",
+        "{OH} => (oh)[\"*\"]"
+    };
+    final String expectedExceptionMessage = "These transition rules are unreachable from the start node.:\n" +
+        "{HELLO} => (hello)[{OH}, /.*/]\n" +
+        "{OH} => (oh)[/.*/]";
+    assertValidationFailsWithExceptionMessage(rules, expectedExceptionMessage);
+  }
+
   private void assertValidationFailsWithExceptionMessage(final String[] rules, final String expectedExceptionMessage) {
     List<TransitionRule> ruleSet = stream(rules)
         .map(TransitionRuleFactory::fromString)

@@ -5,12 +5,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.*;
 
 public class TransitionRuleFactory {
 
-  private static final Pattern RULE_PATTERN = Pattern.compile("\\s*(\\S+)\\s*=>\\s*(\\S+)\\s*");
+  private static final Pattern RULE_PATTERN = Pattern.compile("\\s*(\\S+)\\s*=>\\s*(.+)\\s*");
   private static final Pattern RHS_PATTERN = Pattern.compile("(\\(\\w+\\)|\\{\\w+\\})(\\[(.*?)\\])?");
 
   static TransitionRule fromString(final String transitionRuleString) {
@@ -50,15 +49,19 @@ public class TransitionRuleFactory {
     return transitionRule;
   }
 
-  private static Node toNode(final String nodeSerialization) {
+  private static Node toNode(final String rawNodeSerialization) {
+    String nodeSerialization = rawNodeSerialization.trim();
+    // TagNode
     if (nodeSerialization.startsWith("(")) {
       String content = nodeSerialization.replaceAll("[\\(\\)]", "");
       return new TagNode(content);
     }
+    // NonTerminalMarkupNode
     if (nodeSerialization.startsWith("{")) {
       String content = nodeSerialization.replaceAll("[\\{\\}]", "");
       return new NonTerminalMarkupNode(content);
     }
+    // AnyTextNode
     if (nodeSerialization.startsWith("\"")) {
       return new AnyTextNode();
     }
@@ -97,6 +100,7 @@ public class TransitionRuleFactory {
   }
 
   private static void detectCycle(final List<TransitionRule> ruleSet, final String startNode) {
+    // calculate which nonterminals are connected through the transition rules
     Map<String, Set<String>> nonTerminalConnections = new HashMap<>();
     ruleSet.forEach(r -> {
       String key = r.lefthandside.toString();
@@ -106,6 +110,7 @@ public class TransitionRuleFactory {
           .map(Object::toString)
           .forEach(values::add);
     });
+
     List<String> toVisit = new ArrayList<>();
     Set<String> visited = new HashSet<>();
     toVisit.add(startNode);
@@ -129,5 +134,25 @@ public class TransitionRuleFactory {
       toVisit.addAll(newNodes);
       visited.add(next);
     }
+
+    // all rules should have been visited.
+    // for now, we don't keep track of which rules have been visited, just which nonterminals
+    // but each nonterminal appears as lhs in at least 1 transition rule
+    // and since we connected the nonterminals with all the nonterminals from all the rhs of all relevant transition rules, it's as if we followed all branches.
+    // so transition rules with unvisited nonterminals as their lhs are transition rules that are unreachable from the start node
+    Set<String> unvisitedNonTerminals = new HashSet(nonTerminalConnections.keySet());
+    unvisitedNonTerminals.removeAll(visited);
+    if (!unvisitedNonTerminals.isEmpty()) {
+      List<String> unreachedRules = ruleSet.stream()
+          .filter(r -> unvisitedNonTerminals.contains(r.lefthandside.toString()))
+          .map(Object::toString)
+          .collect(toList());
+      String head = unreachedRules.size() == 1 ? "This transition rule is"
+          : "These transition rules are";
+      String message = head + " unreachable from the start node.:\n" + unreachedRules.stream().collect(joining("\n"));
+      throw new TransitionRuleSetValidationException(message);
+
+    }
+
   }
 }

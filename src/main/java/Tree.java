@@ -3,6 +3,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.stream.Collectors.joining;
+
 /*
 /* author: Ronald Haentjens Dekker
  * v1: date: 11-09-2018
@@ -57,12 +59,13 @@ class Tree<T> {
   @Override
   public String toString() {
     StringBuilder result = new StringBuilder();
-    result.append(root.toString());
-    result.append("[");
-    for (T child : children.get(root)) {
-      result.append(child.toString());
-    }
-    result.append("]");
+    result.append(root.toString())
+        .append("[");
+    String children = this.children.get(root)
+        .stream()
+        .map(Object::toString)
+        .collect(joining(", "));
+    result.append(children).append("]");
     return result.toString();
   }
 }
