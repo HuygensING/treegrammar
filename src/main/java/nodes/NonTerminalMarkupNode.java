@@ -3,7 +3,7 @@ package nodes;
 import java.util.regex.Pattern;
 
 public class NonTerminalMarkupNode implements NonTerminalNode {
-  public static final Pattern PATTERN = Pattern.compile("\\{([a-zA-Z_]*)\\}");
+  public static final Pattern PATTERN = Pattern.compile("([A-Z][a-zA-Z_]*)");
   final String variableName;
 
   public NonTerminalMarkupNode(String variableName) {
@@ -18,6 +18,6 @@ public class NonTerminalMarkupNode implements NonTerminalNode {
 
   @Override
   public String toString() {
-    return "{" + variableName + "}";
+    return variableName;
   }
 }

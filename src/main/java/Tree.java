@@ -64,7 +64,7 @@ class Tree<T> {
     String children = this.children.get(root)
         .stream()
         .map(Object::toString)
-        .collect(joining(", "));
+        .collect(joining(" "));
     result.append(children).append("]");
     return result.toString();
   }

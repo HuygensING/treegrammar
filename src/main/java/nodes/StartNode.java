@@ -1,13 +1,14 @@
 package nodes;
 
 public class StartNode implements NonTerminalNode {
+  public static String CIPHER = "#";
 
   public StartNode() {
   }
 
   @Override
   public String toString() {
-    return "{}";
+    return CIPHER;
   }
 
   @Override

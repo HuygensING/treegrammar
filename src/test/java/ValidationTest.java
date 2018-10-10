@@ -30,7 +30,7 @@ public class ValidationTest {
       validator.parse("<root><markup>tekst and <b>more</b> markup</markup></root>");
       fail("Expected an exception");
     } catch (Exception e) {
-      assertThat(e).hasMessage("Expected text node, but got (b)");
+      assertThat(e).hasMessage("Expected text node, but got b");
     }
   }
 
@@ -41,15 +41,15 @@ public class ValidationTest {
       validator.parse("<root>plain tekst and <markup>marked-up tekst</markup></root>");
       fail("Expected an exception");
     } catch (Exception e) {
-      assertThat(e).hasMessage("No match: expected (markup) but found \"plain tekst and \"");
+      assertThat(e).hasMessage("No match: expected markup but found \"plain tekst and \"");
     }
   }
 
   private List<TransitionRule> defaultTransitionRules() {
     final List<TransitionRule> defaultTransitionRules = new ArrayList<>();
-    defaultTransitionRules.add(TransitionRuleFactory.fromString("{} => {ROOT}"));
-    defaultTransitionRules.add(TransitionRuleFactory.fromString("{ROOT} => (root)[{MARKUP}]"));
-    defaultTransitionRules.add(TransitionRuleFactory.fromString("{MARKUP} => (markup)[#]"));
+    defaultTransitionRules.add(TransitionRuleFactory.fromString("# => ROOT"));
+    defaultTransitionRules.add(TransitionRuleFactory.fromString("ROOT => root[MARKUP]"));
+    defaultTransitionRules.add(TransitionRuleFactory.fromString("MARKUP => markup[_]"));
     return defaultTransitionRules;
   }
 

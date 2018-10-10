@@ -2,12 +2,14 @@ package nodes;
 
 public class AnyTextNode implements NonTerminalNode {
 
+  public static final String CIPHER = "_";
+
   public AnyTextNode() {
   }
 
   @Override
   public String toString() {
-    return "#";
+    return CIPHER;
   }
 
   @Override

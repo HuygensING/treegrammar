@@ -7,10 +7,7 @@ import javax.xml.stream.events.Characters;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.io.StringReader;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.List;
-import java.util.Stack;
 
 import static java.util.Arrays.asList;
 

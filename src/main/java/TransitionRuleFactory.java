@@ -10,7 +10,7 @@ import static java.util.stream.Collectors.*;
 public class TransitionRuleFactory {
 
   private static final Pattern RULE_PATTERN = Pattern.compile("\\s*(\\S+)\\s*=>\\s*(.+)\\s*");
-  private static final Pattern RHS_PATTERN = Pattern.compile("(\\(\\w+\\)|\\{\\w+\\})(\\[(.*?)\\])?");
+  private static final Pattern RHS_PATTERN = Pattern.compile("([A-Za-z0-9]+)(\\[(.*?)\\])?");
 
   static TransitionRule fromString(final String transitionRuleString) {
     Matcher rulematcher = RULE_PATTERN.matcher(transitionRuleString);
@@ -20,11 +20,16 @@ public class TransitionRuleFactory {
 
     String rawLHS = rulematcher.group(1);
     Matcher lhsMatcher = NonTerminalMarkupNode.PATTERN.matcher(rawLHS);
-    if (!lhsMatcher.matches()) {
+    String startNodeRepresentation = new StartNode().toString();
+
+    NonTerminalNode lhs;
+    if (rawLHS.equals(startNodeRepresentation)) {
+      lhs = new StartNode();
+    } else if (lhsMatcher.matches()) {
+      lhs = new NonTerminalMarkupNode(lhsMatcher.group(1));
+    }else{
       throw new TransitionRuleParseException("The left-hand side of the rule should be a non-terminal, but was " + rawLHS);
     }
-    String lhsTag = lhsMatcher.group(1);
-    NonTerminalNode lhs = lhsTag.isEmpty() ? new StartNode() : new NonTerminalMarkupNode(lhsTag);
 
     String rawRHS = rulematcher.group(2).trim();
     Matcher rhsMatcher = RHS_PATTERN.matcher(rawRHS);
@@ -36,7 +41,7 @@ public class TransitionRuleFactory {
     final List<Node> rhsChildren = new ArrayList<>();
     String rawChildren = rhsMatcher.group(3);
     if (rawChildren != null) {
-      String[] splitChildren = rawChildren.split(",");
+      String[] splitChildren = rawChildren.split("\\s+");
       stream(splitChildren)
           .map(TransitionRuleFactory::toNode)
           .forEach(rhsChildren::add);
@@ -50,21 +55,23 @@ public class TransitionRuleFactory {
     return transitionRule;
   }
 
-  private static Node toNode(final String rawNodeSerialization) {
+  static Node toNode(final String rawNodeSerialization) {
     String nodeSerialization = rawNodeSerialization.trim();
     // TagNode
-    if (nodeSerialization.startsWith("(")) {
-      String content = nodeSerialization.replaceAll("[\\(\\)]", "");
-      return new TagNode(content);
+    if (nodeSerialization.substring(0, 1).matches("[a-z]")) {
+      return new TagNode(nodeSerialization);
     }
     // NonTerminalMarkupNode
-    if (nodeSerialization.startsWith("{")) {
-      String content = nodeSerialization.replaceAll("[\\{\\}]", "");
-      return new NonTerminalMarkupNode(content);
+    if (nodeSerialization.substring(0, 1).matches("[A-Z]")) {
+      return new NonTerminalMarkupNode(nodeSerialization);
     }
     // AnyTextNode
-    if (nodeSerialization.equals("#")) {
+    if (nodeSerialization.equals(AnyTextNode.CIPHER)) {
       return new AnyTextNode();
+    }
+    // StartNode
+    if (nodeSerialization.equals(StartNode.CIPHER)) {
+      return new StartNode();
     }
     throw new RuntimeException("Unexpected node in transition rule: " + nodeSerialization);
   }
@@ -78,7 +85,8 @@ public class TransitionRuleFactory {
     String startNode = new StartNode().toString();
     boolean startNodeTransitionRuleIsPresent = lhsNonTerminals.contains(startNode);
     if (!startNodeTransitionRuleIsPresent) {
-      throw new TransitionRuleSetValidationException("No startnode transition rule ({} => ...) found!");
+      throw new TransitionRuleSetValidationException(
+          "No start node transition rule (" + StartNode.CIPHER + " => ...) found!");
     }
 
     Set<String> rhsNonTerminals = ruleSet.stream()

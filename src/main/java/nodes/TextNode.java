@@ -17,6 +17,7 @@ public class TextNode implements TerminalNode {
 
   @Override
   public boolean matches(Node node) {
-    return node instanceof TextNode && ((TextNode) node).content.equals(content);
+    return node instanceof TextNode
+        && ((TextNode) node).content.equals(content);
   }
 }
