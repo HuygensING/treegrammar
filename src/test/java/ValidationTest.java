@@ -13,10 +13,10 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class ValidationTest {
+class ValidationTest {
 
   @Test
-  public void testXMLParses() throws XMLStreamException {
+  void testXMLParses() throws XMLStreamException {
     XMLValidatorUsingTreeGrammars validator = new XMLValidatorUsingTreeGrammars(defaultTransitionRules());
     validator.parse("<root><markup>tekst</markup></root>");
     Tree<Node> tree = validator.getTree();
@@ -24,7 +24,7 @@ public class ValidationTest {
   }
 
   @Test
-  public void testXMLDoesNotParse1() {
+  void testXMLDoesNotParse1() {
     XMLValidatorUsingTreeGrammars validator = new XMLValidatorUsingTreeGrammars(defaultTransitionRules());
     try {
       validator.parse("<root><markup>tekst and <b>more</b> markup</markup></root>");
@@ -35,7 +35,7 @@ public class ValidationTest {
   }
 
   @Test
-  public void testXMLDoesNotParse2() {
+  void testXMLDoesNotParse2() {
     XMLValidatorUsingTreeGrammars validator = new XMLValidatorUsingTreeGrammars(defaultTransitionRules());
     try {
       validator.parse("<root>plain tekst and <markup>marked-up tekst</markup></root>");

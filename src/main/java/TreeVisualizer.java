@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class TreeVisualizer {
+class TreeVisualizer {
 
   public static <T> String asText(Tree<T> tree) {
     StringBuilder stringBuilder = new StringBuilder();

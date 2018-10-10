@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.*;
 
-public class TransitionRuleFactory {
+class TransitionRuleFactory {
 
   private static final Pattern RULE_PATTERN = Pattern.compile("\\s*(\\S+)\\s*=>\\s*(.+)\\s*");
   private static final Pattern RHS_PATTERN = Pattern.compile("([A-Za-z0-9]+)(\\[(.*?)\\])?");
@@ -51,8 +51,7 @@ public class TransitionRuleFactory {
     }
 
     final Tree<Node> rhs = new Tree<>(rhsRoot, rhsChildren);
-    final TransitionRule transitionRule = new TransitionRule(lhs, rhs);
-    return transitionRule;
+    return new TransitionRule(lhs, rhs);
   }
 
   static Node toNode(final String rawNodeSerialization) {
@@ -100,8 +99,7 @@ public class TransitionRuleFactory {
     if (!nonTerminalsWithoutTransitionRules.isEmpty()) {
       throw new TransitionRuleSetValidationException(
           "No terminating transition rules found for "
-              + nonTerminalsWithoutTransitionRules.stream()
-              .collect(joining(",")));
+              + String.join(",", nonTerminalsWithoutTransitionRules));
     }
 
     detectCycle(ruleSet, startNode);
@@ -158,7 +156,7 @@ public class TransitionRuleFactory {
           .collect(toList());
       String head = unreachedRules.size() == 1 ? "This transition rule is"
           : "These transition rules are";
-      String message = head + " unreachable from the start node.:\n" + unreachedRules.stream().collect(joining("\n"));
+      String message = head + " unreachable from the start node.:\n" + String.join("\n", unreachedRules);
       throw new TransitionRuleSetValidationException(message);
 
     }

@@ -40,7 +40,7 @@ class Tree<T> {
     }
   }
 
-  public void connect(T parent, T child) {
+  private void connect(T parent, T child) {
     children.putIfAbsent(parent, new ArrayList<T>());
     children.get(parent).add(child);
     parents.put(child, parent);

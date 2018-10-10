@@ -1,7 +1,7 @@
 package nodes;
 
 public class StartNode implements NonTerminalNode {
-  public static String CIPHER = "#";
+  public static final String CIPHER = "#";
 
   public StartNode() {
   }

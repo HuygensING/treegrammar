@@ -4,7 +4,7 @@ package nodes;
  * Created by ronalddekker on 28/09/18.
  */
 public class TagNode implements TerminalNode {
-  final String tag;
+  private final String tag;
 
   public TagNode(String tag) {
     this.tag = tag;

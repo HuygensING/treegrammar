@@ -4,7 +4,7 @@ import java.util.regex.Pattern;
 
 public class NonTerminalMarkupNode implements NonTerminalNode {
   public static final Pattern PATTERN = Pattern.compile("([A-Z][a-zA-Z_]*)");
-  final String variableName;
+  private final String variableName;
 
   public NonTerminalMarkupNode(String variableName) {
     this.variableName = variableName;

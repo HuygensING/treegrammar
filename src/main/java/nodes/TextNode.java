@@ -4,7 +4,7 @@ package nodes;
  * Created by ronalddekker on 28/09/18.
  */
 public class TextNode implements TerminalNode {
-  final String content;
+  private final String content;
 
   public TextNode(String content) {
     this.content = content;

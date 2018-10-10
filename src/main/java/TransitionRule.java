@@ -13,9 +13,9 @@ import java.util.stream.Stream;
 //\
 // Een rule heeft een lefthandside (dat is een non terminal markup node
 // Een right hand side: that is een tree.
-public class TransitionRule {
-  NonTerminalNode lefthandside;
-  Tree<Node> righthandside;
+class TransitionRule {
+  final NonTerminalNode lefthandside;
+  final Tree<Node> righthandside;
 
   public TransitionRule(NonTerminalNode lefthandside, Tree<Node> righthandside) {
     this.lefthandside = lefthandside;

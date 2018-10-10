@@ -7,13 +7,14 @@ import javax.xml.stream.events.Characters;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.io.StringReader;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.Arrays.asList;
 
 // * author: Ronald Haentjens Dekker
 // * date: 11-09-2018
-public class XMLValidatorUsingTreeGrammars {
+class XMLValidatorUsingTreeGrammars {
   private final StateMachine stateMachine = new StateMachine();
 
   XMLValidatorUsingTreeGrammars(List<TransitionRule> transitionRules) {
@@ -68,13 +69,13 @@ public class XMLValidatorUsingTreeGrammars {
 
     // {ROOT} => (root)[{MARKUP}]
     NonTerminalNode lhs1 = new NonTerminalMarkupNode("ROOT");
-    Tree<Node> rhs1 = new Tree<>(new TagNode("root"), asList(new NonTerminalMarkupNode("MARKUP")));
+    Tree<Node> rhs1 = new Tree<>(new TagNode("root"), Collections.singletonList(new NonTerminalMarkupNode("MARKUP")));
     TransitionRule transitionRule1 = new TransitionRule(lhs1, rhs1);
     stateMachine.addTransitionRule(transitionRule1);
 
     // {MARKUP} => (markup)["*"]
     NonTerminalNode lhs2 = new NonTerminalMarkupNode("MARKUP");
-    Tree<Node> rhs2 = new Tree<>(new TagNode("markup"), asList(new AnyTextNode()));
+    Tree<Node> rhs2 = new Tree<>(new TagNode("markup"), Collections.singletonList(new AnyTextNode()));
     TransitionRule transitionRule2 = new TransitionRule(lhs2, rhs2);
     stateMachine.addTransitionRule(transitionRule2);
   }

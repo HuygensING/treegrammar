@@ -16,10 +16,10 @@ import static java.util.stream.Collectors.toList;
  * Echter in een tree model zijn er meerdere mogelijke non terminls
  * die je kunt vervangen.
  */
-public class StateMachine {
+class StateMachine {
   private Tree<Node> completeTree; // tree die we aan het opbouwen zijn
   private Node pointerToCurrentNode;
-  private List<TransitionRule> rules;
+  private final List<TransitionRule> rules;
 
   public StateMachine() {
     Node startNode = new StartNode();
@@ -73,19 +73,18 @@ public class StateMachine {
       // set the current pointer
       // aargh we now need a replace, with a parent value, which we don't have yet
       // het gebeuren hier is wat moeilijk, want het kan zijn dat de root vervangen wordt..
-      TransitionRule finalTheRule = theRule;
 
       // als het om de root node gaat vervangen we gewoon de hele tree
       if (pointerToCurrentNode == completeTree.root) {
-        completeTree = finalTheRule.righthandside;
+        completeTree = theRule.righthandside;
       } else {
-        completeTree.mergeTreeIntoCurrentTree(finalTheRule.righthandside, pointerToCurrentNode);
+        completeTree.mergeTreeIntoCurrentTree(theRule.righthandside, pointerToCurrentNode);
       }
       // gaat dit altijd goed... we will see
 //      pointerToCurrentNode = finalTheRule.righthandside.children.get(finalTheRule.righthandside.root).get(0);
-      pointerToCurrentNode = finalTheRule.firstNonTerminalNode().orElse(null);
+      pointerToCurrentNode = theRule.firstNonTerminalNode().orElse(null);
       System.out.println("pointerToCurrentNode=" + pointerToCurrentNode);
-      if (finalTheRule.hasNoRHSTerminals()) {
+      if (theRule.hasNoRHSTerminals()) {
         processInput(node);
       }
     } else {

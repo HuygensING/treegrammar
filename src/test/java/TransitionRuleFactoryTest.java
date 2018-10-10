@@ -11,31 +11,31 @@ import static org.junit.jupiter.api.Assertions.fail;
 class TransitionRuleFactoryTest {
 
   @Test
-  public void testTagNodeSerialization() {
+  void testTagNodeSerialization() {
     Node node = TransitionRuleFactory.toNode("element");
     assertThat(node).isInstanceOf(TagNode.class);
   }
 
   @Test
-  public void testNonTerminalMarkupNodeSerialization() {
+  void testNonTerminalMarkupNodeSerialization() {
     Node node = TransitionRuleFactory.toNode("Variable");
     assertThat(node).isInstanceOf(NonTerminalMarkupNode.class);
   }
 
   @Test
-  public void testStartNodeSerialization() {
+  void testStartNodeSerialization() {
     Node node = TransitionRuleFactory.toNode("#");
     assertThat(node).isInstanceOf(StartNode.class);
   }
 
   @Test
-  public void testAnyTextNodeSerialization() {
+  void testAnyTextNodeSerialization() {
     Node node = TransitionRuleFactory.toNode("_");
     assertThat(node).isInstanceOf(AnyTextNode.class);
   }
 
   @Test
-  public void testParseTransitionRule1() {
+  void testParseTransitionRule1() {
     String input = "# => ROOT";
     TransitionRule tr = TransitionRuleFactory.fromString(input);
 
@@ -51,7 +51,7 @@ class TransitionRuleFactoryTest {
   }
 
   @Test
-  public void testParseTransitionRule2() {
+  void testParseTransitionRule2() {
     String input = "ROOT => root[MARKUP]";
     TransitionRule tr = TransitionRuleFactory.fromString(input);
 
@@ -70,7 +70,7 @@ class TransitionRuleFactoryTest {
   }
 
   @Test
-  public void testParseTransitionRule3() {
+  void testParseTransitionRule3() {
     String input = "MARKUP => markup[_]";
     TransitionRule tr = TransitionRuleFactory.fromString(input);
 
@@ -91,28 +91,28 @@ class TransitionRuleFactoryTest {
   }
 
   @Test
-  public void testTransitionRuleDoesNotParse1() {
+  void testTransitionRuleDoesNotParse1() {
     String input = "This is not a valid rule";
     String expectedExceptionMessage = "Not a valid transition rule: This is not a valid rule";
     assertParsingFailsWithExceptionMessage(input, expectedExceptionMessage);
   }
 
   @Test
-  public void testTransitionRuleDoesNotParse2() {
+  void testTransitionRuleDoesNotParse2() {
     String input = "M => ";
     String expectedExceptionMessage = "The right-hand side of the rule should have a root and zero or more children, but was empty.";
     assertParsingFailsWithExceptionMessage(input, expectedExceptionMessage);
   }
 
   @Test
-  public void testTransitionRuleDoesNotParse3() {
+  void testTransitionRuleDoesNotParse3() {
     String input = "root => hello[world]";
     String expectedExceptionMessage = "The left-hand side of the rule should be a non-terminal, but was root";
     assertParsingFailsWithExceptionMessage(input, expectedExceptionMessage);
   }
 
   @Test
-  public void testCycleDetection() {
+  void testCycleDetection() {
     String[] rules = {
         "# => NAME",
         "NAME => name[FIRST LAST]",
@@ -125,7 +125,7 @@ class TransitionRuleFactoryTest {
   }
 
   @Test
-  public void thereShouldBeAStartNodeTransitionRule() {
+  void thereShouldBeAStartNodeTransitionRule() {
     String[] rules = {
         "NAME => name[FIRST LAST]",
         "FIRST => first[_]",
@@ -136,7 +136,7 @@ class TransitionRuleFactoryTest {
   }
 
   @Test
-  public void everyNonTerminalShouldTerminateEventually() {
+  void everyNonTerminalShouldTerminateEventually() {
     String[] rules = {
         "# => NAME",
         "NAME => name[FIRST LAST]",
@@ -147,7 +147,7 @@ class TransitionRuleFactoryTest {
   }
 
   @Test
-  public void allTransactionRulesShouldBeReachableFromTheStartNode() {
+  void allTransactionRulesShouldBeReachableFromTheStartNode() {
     String[] rules = {
         "# => NAME",
         "NAME => name[FIRST LAST]",
