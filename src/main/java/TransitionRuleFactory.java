@@ -13,12 +13,12 @@ class TransitionRuleFactory {
   private static final Pattern RHS_PATTERN = Pattern.compile("([A-Za-z0-9]+)(\\[(.*?)\\])?");
 
   static TransitionRule fromString(final String transitionRuleString) {
-    Matcher rulematcher = RULE_PATTERN.matcher(transitionRuleString);
-    if (!rulematcher.matches()) {
+    Matcher ruleMatcher = RULE_PATTERN.matcher(transitionRuleString);
+    if (!ruleMatcher.matches()) {
       throw new TransitionRuleParseException("Not a valid transition rule: " + transitionRuleString);
     }
 
-    String rawLHS = rulematcher.group(1);
+    String rawLHS = ruleMatcher.group(1);
     Matcher lhsMatcher = NonTerminalMarkupNode.PATTERN.matcher(rawLHS);
     String startNodeRepresentation = new StartNode().toString();
 
@@ -27,11 +27,11 @@ class TransitionRuleFactory {
       lhs = new StartNode();
     } else if (lhsMatcher.matches()) {
       lhs = new NonTerminalMarkupNode(lhsMatcher.group(1));
-    }else{
+    } else {
       throw new TransitionRuleParseException("The left-hand side of the rule should be a non-terminal, but was " + rawLHS);
     }
 
-    String rawRHS = rulematcher.group(2).trim();
+    String rawRHS = ruleMatcher.group(2).trim();
     Matcher rhsMatcher = RHS_PATTERN.matcher(rawRHS);
     if (!rhsMatcher.matches()) {
       String was = rawRHS.isEmpty() ? "empty." : "'" + rawRHS + "'";
@@ -133,7 +133,8 @@ class TransitionRuleFactory {
                 .anyMatch(revisits::contains))
             .map(Object::toString)
             .collect(joining("\n"));
-        String head = revisits.size() == 1 ? "This transition rule introduces a cycle"
+        String head = revisits.size() == 1
+            ? "This transition rule introduces a cycle"
             : "These transition rules introduce cycles";
         String message = head + ":\n" + offendingRules;
         throw new TransitionRuleSetValidationException(message);
@@ -154,11 +155,11 @@ class TransitionRuleFactory {
           .filter(r -> unvisitedNonTerminals.contains(r.lefthandside.toString()))
           .map(Object::toString)
           .collect(toList());
-      String head = unreachedRules.size() == 1 ? "This transition rule is"
+      String head = unreachedRules.size() == 1
+          ? "This transition rule is"
           : "These transition rules are";
       String message = head + " unreachable from the start node.:\n" + String.join("\n", unreachedRules);
       throw new TransitionRuleSetValidationException(message);
-
     }
 
   }

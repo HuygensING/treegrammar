@@ -10,14 +10,13 @@ import java.io.StringReader;
 import java.util.Collections;
 import java.util.List;
 
-import static java.util.Arrays.asList;
-
 // * author: Ronald Haentjens Dekker
 // * date: 11-09-2018
 class XMLValidatorUsingTreeGrammars {
   private final StateMachine stateMachine = new StateMachine();
 
   XMLValidatorUsingTreeGrammars(List<TransitionRule> transitionRules) {
+    TransitionRuleFactory.validateRuleSet(transitionRules);
     transitionRules.forEach(stateMachine::addTransitionRule);
   }
 
@@ -48,6 +47,8 @@ class XMLValidatorUsingTreeGrammars {
         String content = characters.toString();
         nodes.Node textNode = new nodes.TextNode(content);
         stateMachine.processInput(textNode);
+      }else if (xmlEvent.isEndElement()){
+        stateMachine.pop();
       }
       System.out.println();
     }

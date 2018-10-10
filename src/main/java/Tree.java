@@ -46,13 +46,21 @@ class Tree<T> {
     parents.put(child, parent);
   }
 
+  private void disconnect(T parent, T child) {
+    children.get(parent).remove(child);
+    parents.remove(child, parent);
+  }
+
   public void mergeTreeIntoCurrentTree(Tree<T> toMerge, T nodeToReplace) {
     // Copy the children map from the tree container to merge, and connect the parent of the node to replace
     // with the root of the tree to merge
+//    this.children.remove(nodeToReplace);
     this.children.putAll(toMerge.children);
+//    this.parents.remove(toMerge);
     this.parents.putAll(toMerge.parents);
     T parent = parents.get(nodeToReplace);
     connect(parent, toMerge.root);
+    disconnect(parent, nodeToReplace);
   }
 
   // NOTE: The toString method goes only one level deep

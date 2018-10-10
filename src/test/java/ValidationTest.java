@@ -10,6 +10,8 @@ import javax.xml.stream.XMLStreamException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -30,7 +32,7 @@ class ValidationTest {
       validator.parse("<root><markup>tekst and <b>more</b> markup</markup></root>");
       fail("Expected an exception");
     } catch (Exception e) {
-      assertThat(e).hasMessage("Expected text node, but got b");
+      assertThat(e).hasMessage("Unexpected node b");
     }
   }
 
@@ -51,6 +53,29 @@ class ValidationTest {
     defaultTransitionRules.add(TransitionRuleFactory.fromString("ROOT => root[MARKUP]"));
     defaultTransitionRules.add(TransitionRuleFactory.fromString("MARKUP => markup[_]"));
     return defaultTransitionRules;
+  }
+
+  @Test
+  void testXMLParses2() throws XMLStreamException {
+    String[] ruleStrings = {
+        "# => P",
+        "P => person[NAME]",
+        "NAME => name[FIRST LAST]",
+        "FIRST => first[_]",
+        "LAST => last[_]"
+    };
+    final List<TransitionRule> transitionRules = stream(ruleStrings)
+        .map(TransitionRuleFactory::fromString)
+        .collect(toList());
+    XMLValidatorUsingTreeGrammars validator = new XMLValidatorUsingTreeGrammars(transitionRules);
+    validator.parse("<person>" +
+        "<name>" +
+        "<first>John</first>" +
+        "<last>Doe</last>" +
+        "</name>" +
+        "</person>");
+    Tree<Node> tree = validator.getTree();
+    System.out.println(TreeVisualizer.asText(tree));
   }
 
 }

@@ -125,6 +125,20 @@ class TransitionRuleFactoryTest {
   }
 
   @Test
+  void thisIsNotACycle() {
+    String[] rules = {
+        "# => review[BOOK REVIEWER]",
+        "BOOK => book[TITLE AUTHOR]",
+        "TITLE => title[_]",
+        "AUTHOR => author[PERSON]",
+        "REVIEWER => reviewer[PERSON]",
+        "PERSON => person[NAME]",
+        "NAME => name[_]"
+    };
+    assertRuleSetIsValid(rules);
+  }
+
+  @Test
   void thereShouldBeAStartNodeTransitionRule() {
     String[] rules = {
         "NAME => name[FIRST LAST]",
@@ -162,10 +176,19 @@ class TransitionRuleFactoryTest {
     assertValidationFailsWithExceptionMessage(rules, expectedExceptionMessage);
   }
 
-  private void assertValidationFailsWithExceptionMessage(final String[] rules, final String expectedExceptionMessage) {
-    List<TransitionRule> ruleSet = stream(rules)
+  private void assertRuleSetIsValid(final String[] rules) {
+    List<TransitionRule> ruleSet = processRuleStrings(rules);
+    TransitionRuleFactory.validateRuleSet(ruleSet);
+  }
+
+  private List<TransitionRule> processRuleStrings(final String[] rules) {
+    return stream(rules)
         .map(TransitionRuleFactory::fromString)
         .collect(toList());
+  }
+
+  private void assertValidationFailsWithExceptionMessage(final String[] rules, final String expectedExceptionMessage) {
+    List<TransitionRule> ruleSet = processRuleStrings(rules);
     try {
       TransitionRuleFactory.validateRuleSet(ruleSet);
       fail("expected a TransitionRuleSetValidationException with message: " + expectedExceptionMessage);

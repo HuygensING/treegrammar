@@ -6,7 +6,10 @@ import nodes.TerminalNode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
 
 // * author: Ronald Haentjens Dekker
 // * date: 11-09-2018
@@ -66,5 +69,17 @@ class TransitionRule {
   @Override
   public String toString() {
     return lefthandside + " => " + righthandside;
+  }
+
+  public List<NonTerminalNode> righthandsideNonTerminals() {
+    List<Node> list = new ArrayList<>();
+    if (righthandside.root instanceof NonTerminalMarkupNode) {
+      list.add(righthandside.root);
+    }
+    list.addAll(righthandside.children.get(righthandside.root));
+    return list.stream()
+        .filter(NonTerminalNode.class::isInstance)
+        .map(NonTerminalNode.class::cast)
+        .collect(toList());
   }
 }
