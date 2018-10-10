@@ -49,7 +49,7 @@ public class ValidationTest {
     final List<TransitionRule> defaultTransitionRules = new ArrayList<>();
     defaultTransitionRules.add(TransitionRuleFactory.fromString("{} => {ROOT}"));
     defaultTransitionRules.add(TransitionRuleFactory.fromString("{ROOT} => (root)[{MARKUP}]"));
-    defaultTransitionRules.add(TransitionRuleFactory.fromString("{MARKUP} => (markup)[\"*\"]"));
+    defaultTransitionRules.add(TransitionRuleFactory.fromString("{MARKUP} => (markup)[#]"));
     return defaultTransitionRules;
   }
 

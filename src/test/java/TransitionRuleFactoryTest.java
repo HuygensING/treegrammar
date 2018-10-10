@@ -47,7 +47,7 @@ class TransitionRuleFactoryTest {
 
   @Test
   public void testParseTransitionRule3() {
-    String input = "{MARKUP} => (markup)[\"*\"]";
+    String input = "{MARKUP} => (markup)[#]";
     TransitionRule tr = TransitionRuleFactory.fromString(input);
 
     String actualLHS = tr.lefthandside.toString();
@@ -76,7 +76,7 @@ class TransitionRuleFactoryTest {
   @Test
   public void testTransitionRuleDoesNotParse2() {
     String input = "{M} => ";
-    String expectedExceptionMessage = "Not a valid transition rule: {M} => ";
+    String expectedExceptionMessage = "The right-hand side of the rule should have a root and zero or more children, but was empty.";
     assertParsingFailsWithExceptionMessage(input, expectedExceptionMessage);
   }
 
@@ -92,7 +92,7 @@ class TransitionRuleFactoryTest {
     String[] rules = {
         "{} => {NAME}",
         "{NAME} => (name)[{FIRST},{LAST}]",
-        "{FIRST} => (first)[\"*\"]",
+        "{FIRST} => (first)[#]",
         "{LAST} => (last)[{NAME}]" // cycle!
     };
     final String expectedExceptionMessage = "This transition rule introduces a cycle:\n" +
@@ -104,8 +104,8 @@ class TransitionRuleFactoryTest {
   public void thereShouldBeAStartNodeTransitionRule() {
     String[] rules = {
         "{NAME} => (name)[{FIRST},{LAST}]",
-        "{FIRST} => (first)[\"*\"]",
-        "{LAST} => (last)[\"*\"]"
+        "{FIRST} => (first)[#]",
+        "{LAST} => (last)[#]"
     };
     final String expectedExceptionMessage = "No startnode transition rule ({} => ...) found!";
     assertValidationFailsWithExceptionMessage(rules, expectedExceptionMessage);
@@ -116,7 +116,7 @@ class TransitionRuleFactoryTest {
     String[] rules = {
         "{} => {NAME}",
         "{NAME} => (name)[{FIRST},{LAST}]",
-        "{FIRST} => (first)[\"*\"]" // {LAST} does not terminate
+        "{FIRST} => (first)[#]" // {LAST} does not terminate
     };
     final String expectedExceptionMessage = "No terminating transition rules found for {LAST}";
     assertValidationFailsWithExceptionMessage(rules, expectedExceptionMessage);
@@ -127,14 +127,14 @@ class TransitionRuleFactoryTest {
     String[] rules = {
         "{} => {NAME}",
         "{NAME} => (name)[{FIRST},{LAST}]",
-        "{FIRST} => (first)[\"*\"]",
-        "{LAST} => (last)[\"*\"]",
-        "{HELLO} => (hello)[{OH}, \"*\"]",
-        "{OH} => (oh)[\"*\"]"
+        "{FIRST} => (first)[#]",
+        "{LAST} => (last)[#]",
+        "{HELLO} => (hello)[{OH}, #]",
+        "{OH} => (oh)[#]"
     };
     final String expectedExceptionMessage = "These transition rules are unreachable from the start node.:\n" +
-        "{HELLO} => (hello)[{OH}, /.*/]\n" +
-        "{OH} => (oh)[/.*/]";
+        "{HELLO} => (hello)[{OH}, #]\n" +
+        "{OH} => (oh)[#]";
     assertValidationFailsWithExceptionMessage(rules, expectedExceptionMessage);
   }
 

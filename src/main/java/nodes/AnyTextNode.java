@@ -7,7 +7,7 @@ public class AnyTextNode implements NonTerminalNode {
 
   @Override
   public String toString() {
-    return "/.*/";
+    return "#";
   }
 
   @Override

@@ -26,10 +26,11 @@ public class TransitionRuleFactory {
     String lhsTag = lhsMatcher.group(1);
     NonTerminalNode lhs = lhsTag.isEmpty() ? new StartNode() : new NonTerminalMarkupNode(lhsTag);
 
-    String rawRHS = rulematcher.group(2);
+    String rawRHS = rulematcher.group(2).trim();
     Matcher rhsMatcher = RHS_PATTERN.matcher(rawRHS);
     if (!rhsMatcher.matches()) {
-      throw new TransitionRuleParseException("The right-hand side of the rule should have a root and zero or more children, but was " + rawRHS);
+      String was = rawRHS.isEmpty() ? "empty." : "'" + rawRHS + "'";
+      throw new TransitionRuleParseException("The right-hand side of the rule should have a root and zero or more children, but was " + was);
     }
     Node rhsRoot = toNode(rhsMatcher.group(1));
     final List<Node> rhsChildren = new ArrayList<>();
@@ -62,7 +63,7 @@ public class TransitionRuleFactory {
       return new NonTerminalMarkupNode(content);
     }
     // AnyTextNode
-    if (nodeSerialization.startsWith("\"")) {
+    if (nodeSerialization.equals("#")) {
       return new AnyTextNode();
     }
     throw new RuntimeException("Unexpected node in transition rule: " + nodeSerialization);
