@@ -1,4 +1,5 @@
 import nodes.*;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -124,7 +125,8 @@ public class TransitionRuleFactoryTest {
     assertValidationFailsWithExceptionMessage(rules, expectedExceptionMessage);
   }
 
-//  @Test
+  @Test
+  @Disabled
   void thisIsNotACycle() {
     String[] rules = {
         "# => review[BOOK REVIEWER]",
