@@ -5,7 +5,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 
 class TransitionRuleFactory {
 
@@ -118,6 +120,39 @@ class TransitionRuleFactory {
           .forEach(values::add);
     });
 
+    // if there is a cycle, that means there are rules that don't terminate
+    // so first find the lhs non-terminals of the terminating rules
+    // terminating rules have a tagnode as root and either no children, or just 1 AnyText node
+    List<String> nonTerminalsWithTerminatingRule = ruleSet.stream()
+        .filter(TransitionRuleFactory::isTerminating)
+        .map(r -> r.lefthandside)
+        .map(Object::toString)
+        .collect(toList());
+
+    Set<String> nonTerminalsWithRules = new HashSet<>(nonTerminalConnections.keySet());
+    nonTerminalsWithRules.removeAll(nonTerminalsWithTerminatingRule);
+    boolean goOn = true;
+    while (goOn) {
+      List<String> indirectlyTerminated = nonTerminalsWithRules.stream()
+          .filter(n -> nonTerminalsWithTerminatingRule.containsAll(nonTerminalConnections.get(n)))
+          .collect(toList());
+      nonTerminalsWithRules.removeAll(indirectlyTerminated);
+      nonTerminalsWithTerminatingRule.addAll(indirectlyTerminated);
+      goOn = !indirectlyTerminated.isEmpty();
+    }
+    if (!nonTerminalsWithRules.isEmpty()) {
+        String offendingRules = ruleSet.stream()
+            .filter(r -> nonTerminalsWithRules.contains(r.lefthandside.toString()))
+            .map(Object::toString)
+            .collect(joining("\n"));
+        String head = nonTerminalsWithRules.size() == 1
+            ? "This transition rule introduces a cycle"
+            : "These transition rules introduce (a) cycle(s)";
+        String message = head + ":\n" + offendingRules;
+        throw new TransitionRuleSetValidationException(message);
+//      throw new TransitionRuleSetValidationException("cycle found!" + nonTerminalsWithRules);
+    }
+
     List<String> toVisit = new ArrayList<>();
     Set<String> visited = new HashSet<>();
     toVisit.add(startNode);
@@ -125,22 +160,24 @@ class TransitionRuleFactory {
       String next = toVisit.remove(0);
       Set<String> newNodes = nonTerminalConnections.get(next);
       Set<String> revisits = newNodes.stream().filter(visited::contains).collect(toSet());
-      if (!revisits.isEmpty()) {
-        String offendingRules = ruleSet.stream()
-            .filter(r -> r.lefthandside.toString().equals(next))
-            .filter(r -> r.righthandsideNonTerminalMarkupNodes()
-                .map(Object::toString)
-                .anyMatch(revisits::contains))
-            .map(Object::toString)
-            .collect(joining("\n"));
-        String head = revisits.size() == 1
-            ? "This transition rule introduces a cycle"
-            : "These transition rules introduce cycles";
-        String message = head + ":\n" + offendingRules;
-        throw new TransitionRuleSetValidationException(message);
-      }
-      toVisit.addAll(newNodes);
+//      if (!revisits.isEmpty()) {
+//        String offendingRules = ruleSet.stream()
+//            .filter(r -> r.lefthandside.toString().equals(next))
+//            .filter(r -> r.righthandsideNonTerminalMarkupNodes()
+//                .map(Object::toString)
+//                .anyMatch(revisits::contains))
+//            .map(Object::toString)
+//            .collect(joining("\n"));
+//        String head = revisits.size() == 1
+//            ? "This transition rule introduces a cycle"
+//            : "These transition rules introduce cycles";
+//        String message = head + ":\n" + offendingRules;
+//        throw new TransitionRuleSetValidationException(message);
+//      }
+
       visited.add(next);
+      toVisit.removeAll(visited);
+      toVisit.addAll(newNodes);
     }
 
     // all rules should have been visited.
@@ -163,4 +200,13 @@ class TransitionRuleFactory {
     }
 
   }
+
+  public static boolean isTerminating(TransitionRule transitionRule) {
+    return transitionRule.righthandside.root instanceof TagNode
+        && (transitionRule.righthandside.children.get(transitionRule.righthandside.root).isEmpty()
+        || (transitionRule.righthandside.children.get(transitionRule.righthandside.root).size() == 1
+        && transitionRule.righthandside.children.get(transitionRule.righthandside.root).get(0) instanceof AnyTextNode
+    ));
+  }
+
 }

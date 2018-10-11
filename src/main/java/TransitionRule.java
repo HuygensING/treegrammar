@@ -6,7 +6,6 @@ import nodes.TerminalNode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -82,4 +81,5 @@ class TransitionRule {
         .map(NonTerminalNode.class::cast)
         .collect(toList());
   }
+
 }

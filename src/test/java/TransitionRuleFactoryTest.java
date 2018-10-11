@@ -1,5 +1,4 @@
 import nodes.*;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -120,13 +119,14 @@ public class TransitionRuleFactoryTest {
         "FIRST => first[_]",
         "LAST => last[NAME]" // cycle!
     };
-    final String expectedExceptionMessage = "This transition rule introduces a cycle:\n" +
+    final String expectedExceptionMessage = "These transition rules introduce (a) cycle(s):\n" +
+        "# => NAME[]\n" +
+        "NAME => name[FIRST LAST]\n" +
         "LAST => last[NAME]";
     assertValidationFailsWithExceptionMessage(rules, expectedExceptionMessage);
   }
 
   @Test
-  @Disabled
   void thisIsNotACycle() {
     String[] rules = {
         "# => review[BOOK REVIEWER]",
