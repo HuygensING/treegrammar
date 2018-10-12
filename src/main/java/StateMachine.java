@@ -49,24 +49,33 @@ class StateMachine {
 
     // We zoeken eerst op naar welke node de huidige pointer verwijst.
     // Dan kijken we welke transitierules er zijn voor dat type node.
-    List<NonTerminalNode> list = nonTerminalsStack.peek();
-    if (list.isEmpty()){
+    List<NonTerminalNode> nonTerminalsToProcess = nonTerminalsStack.peek();
+    if (nonTerminalsToProcess.isEmpty()) {
       throw new RuntimeException("Unexpected node " + node);
     }
-    final Node pointerToCurrentNode = list.remove(0);
-    if (pointerToCurrentNode instanceof AnyTextNode) {
-      if (!pointerToCurrentNode.matches(node)) {
+
+    final Node nonTerminalNode = nonTerminalsToProcess.remove(0);
+    if (nonTerminalNode instanceof AnyTextNode) {
+      if (!nonTerminalNode.matches(node)) {
         throw new RuntimeException("Expected text node, but got " + node);
+      }
+      // replace the AnyText node
+      if (nonTerminalNode == completeTree.root) {
+        completeTree.root = node;
+      } else {
+        Tree nodeAsTree = new Tree(node);
+        completeTree.mergeTreeIntoCurrentTree(nodeAsTree, nonTerminalNode);
       }
       return;
     }
+
     List<TransitionRule> applicableRules = rules.stream()
-        .filter(rule -> rule.lefthandsideIsApplicableFor(pointerToCurrentNode))
+        .filter(rule -> rule.lefthandsideIsApplicableFor(nonTerminalNode))
         .collect(toList());
 
     System.out.println("applicableRules=" + applicableRules);
     if (applicableRules.isEmpty()) {
-      throw new RuntimeException("No transition rule found! Current state: " + node + ", expected: " + pointerToCurrentNode);
+      throw new RuntimeException("No transition rule found! Current state: " + node + ", expected: " + nonTerminalNode);
     }
     TransitionRule theRule = applicableRules.get(0);
     System.out.println("Transition rule found: " + theRule + "! We want to know the right hand side");
@@ -87,18 +96,18 @@ class StateMachine {
       // het gebeuren hier is wat moeilijk, want het kan zijn dat de root vervangen wordt..
 
       // als het om de root node gaat vervangen we gewoon de hele tree
-      if (pointerToCurrentNode == completeTree.root) {
+      if (nonTerminalNode == completeTree.root) {
         completeTree = theRule.righthandside;
       } else {
-        completeTree.mergeTreeIntoCurrentTree(theRule.righthandside, pointerToCurrentNode);
+        completeTree.mergeTreeIntoCurrentTree(theRule.righthandside, nonTerminalNode);
       }
       // gaat dit altijd goed... we will see
-//      pointerToCurrentNode = finalTheRule.righthandside.children.get(finalTheRule.righthandside.root).get(0);
+//      nonTerminalNode = finalTheRule.righthandside.children.get(finalTheRule.righthandside.root).get(0);
       List<NonTerminalNode> nonTerminalNodeList = theRule.righthandsideNonTerminals();
       nonTerminalsStack.push(nonTerminalNodeList);
-//      pointerToCurrentNode = theRule.firstNonTerminalNode().orElse(null);
+//      nonTerminalNode = theRule.firstNonTerminalNode().orElse(null);
 
-      System.out.println("pointerToCurrentNode=" + pointerToCurrentNode);
+      System.out.println("nonTerminalNode=" + nonTerminalNode);
       if (theRule.hasNoRHSTerminals()) {
         processInput(node);
       }

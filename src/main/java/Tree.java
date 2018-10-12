@@ -16,7 +16,7 @@ import static java.util.stream.Collectors.joining;
  * Also it makes it easier to merge two trees etc.
  */
 class Tree<T> {
-  final T root;
+  T root;
   // Every node in the tree has a list of children
   final Map<T, List<T>> children;
   // Every node has one parent; this map maps the node to the parent; so reverse
