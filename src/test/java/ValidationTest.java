@@ -21,8 +21,11 @@ class ValidationTest {
   void testXMLParses() throws XMLStreamException {
     XMLValidatorUsingTreeGrammars validator = new XMLValidatorUsingTreeGrammars(defaultTransitionRules());
     validator.parse("<root><markup>tekst</markup></root>");
-    Tree<Node> tree = validator.getTree();
-    System.out.println(TreeVisualizer.asText(tree));
+
+    String expected = "root\n" +
+        "| markup\n" +
+        "| | \"tekst\"";
+    assertTreeVisualisation(validator, expected);
   }
 
   @Test
@@ -74,8 +77,21 @@ class ValidationTest {
         "<last>Doe</last>" +
         "</name>" +
         "</person>");
+
+    String expected = "person\n" +
+        "| name\n" +
+        "| | first\n" +
+        "| | | \"John\"\n" +
+        "| | last\n" +
+        "| | | \"Doe\"";
+    assertTreeVisualisation(validator, expected);
+  }
+
+  private void assertTreeVisualisation(final XMLValidatorUsingTreeGrammars validator, final String expected) {
     Tree<Node> tree = validator.getTree();
-    System.out.println(TreeVisualizer.asText(tree));
+    String asText = TreeVisualizer.asText(tree);
+    System.out.println(asText);
+    assertThat(asText).isEqualTo(expected);
   }
 
 }
