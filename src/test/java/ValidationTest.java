@@ -52,8 +52,7 @@ class ValidationTest {
 
   private List<TransitionRule> defaultTransitionRules() {
     final List<TransitionRule> defaultTransitionRules = new ArrayList<>();
-    defaultTransitionRules.add(TransitionRuleFactory.fromString("# => ROOT"));
-    defaultTransitionRules.add(TransitionRuleFactory.fromString("ROOT => root[MARKUP]"));
+    defaultTransitionRules.add(TransitionRuleFactory.fromString("# => root[MARKUP]"));
     defaultTransitionRules.add(TransitionRuleFactory.fromString("MARKUP => markup[_]"));
     return defaultTransitionRules;
   }
@@ -61,8 +60,7 @@ class ValidationTest {
   @Test
   void testXMLParses2() throws XMLStreamException {
     String[] ruleStrings = {
-        "# => P",
-        "P => person[NAME]",
+        "# => person[NAME]",
         "NAME => name[FIRST LAST]",
         "FIRST => first[_]",
         "LAST => last[_]"

@@ -5,9 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.*;
 
 class TransitionRuleFactory {
 
@@ -51,7 +49,9 @@ class TransitionRuleFactory {
     } else {
       rhsRoot = toNode(rawRHS);
     }
-
+    if (rhsRoot instanceof NonTerminalMarkupNode) {
+      throw new TransitionRuleParseException("The right-hand side of the rule should have a root that is not a  non-terminal");
+    }
     final Tree<Node> rhs = new Tree<>(rhsRoot, rhsChildren);
     return new TransitionRule(lhs, rhs);
   }
@@ -141,15 +141,15 @@ class TransitionRuleFactory {
       goOn = !indirectlyTerminated.isEmpty();
     }
     if (!nonTerminalsWithRules.isEmpty()) {
-        String offendingRules = ruleSet.stream()
-            .filter(r -> nonTerminalsWithRules.contains(r.lefthandside.toString()))
-            .map(Object::toString)
-            .collect(joining("\n"));
-        String head = nonTerminalsWithRules.size() == 1
-            ? "This transition rule introduces a cycle"
-            : "These transition rules introduce (a) cycle(s)";
-        String message = head + ":\n" + offendingRules;
-        throw new TransitionRuleSetValidationException(message);
+      String offendingRules = ruleSet.stream()
+          .filter(r -> nonTerminalsWithRules.contains(r.lefthandside.toString()))
+          .map(Object::toString)
+          .collect(joining("\n"));
+      String head = nonTerminalsWithRules.size() == 1
+          ? "This transition rule introduces a cycle"
+          : "These transition rules introduce (a) cycle(s)";
+      String message = head + ":\n" + offendingRules;
+      throw new TransitionRuleSetValidationException(message);
 //      throw new TransitionRuleSetValidationException("cycle found!" + nonTerminalsWithRules);
     }
 

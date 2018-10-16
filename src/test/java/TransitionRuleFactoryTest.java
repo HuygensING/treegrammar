@@ -37,17 +37,8 @@ public class TransitionRuleFactoryTest {
   @Test
   void testParseTransitionRule1() {
     String input = "# => ROOT";
-    TransitionRule tr = TransitionRuleFactory.fromString(input);
-
-    String actualLHS = tr.lefthandside.toString();
-    String expectedLHS = new StartNode().toString();
-    assertThat(actualLHS).isEqualTo(expectedLHS);
-
-    String actualRHSRoot = tr.righthandside.root.toString();
-    String expectedRHSRoot = new NonTerminalMarkupNode("ROOT").toString();
-    assertThat(actualRHSRoot).isEqualTo(expectedRHSRoot);
-
-    assertThat(tr.righthandside.children.get(tr.righthandside.root)).isEmpty();
+    String expectedExceptionMessage = "The right-hand side of the rule should have a root that is not a  non-terminal";
+    assertParsingFailsWithExceptionMessage(input, expectedExceptionMessage);
   }
 
   @Test
@@ -114,15 +105,13 @@ public class TransitionRuleFactoryTest {
   @Test
   void testCycleDetection() {
     String[] rules = {
-        "# => NAME",
-        "NAME => name[FIRST LAST]",
+        "# => name[FIRST LAST]",
         "FIRST => first[_]",
-        "LAST => last[NAME]" // cycle!
+        "LAST => last[LAST]" // cycle!
     };
     final String expectedExceptionMessage = "These transition rules introduce (a) cycle(s):\n" +
-        "# => NAME[]\n" +
-        "NAME => name[FIRST LAST]\n" +
-        "LAST => last[NAME]";
+        "# => name[FIRST LAST]\n" +
+        "LAST => last[LAST]";
     assertValidationFailsWithExceptionMessage(rules, expectedExceptionMessage);
   }
 
@@ -154,8 +143,7 @@ public class TransitionRuleFactoryTest {
   @Test
   void everyNonTerminalShouldTerminateEventually() {
     String[] rules = {
-        "# => NAME",
-        "NAME => name[FIRST LAST]",
+        "# => name[FIRST LAST]",
         "FIRST => first[_]" // {LAST} does not terminate
     };
     final String expectedExceptionMessage = "No terminating transition rules found for LAST";
@@ -165,8 +153,7 @@ public class TransitionRuleFactoryTest {
   @Test
   void allTransactionRulesShouldBeReachableFromTheStartNode() {
     String[] rules = {
-        "# => NAME",
-        "NAME => name[FIRST LAST]",
+        "# => name[FIRST LAST]",
         "FIRST => first[_]",
         "LAST => last[_]",
         "HELLO => hello[OH _]",
