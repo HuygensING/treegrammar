@@ -7,7 +7,7 @@ import java.util.List;
 
 public class ChoiceNode implements NonTerminalNode {
 
-  private List<Tree<Node>> choices = new ArrayList<>();
+  public List<Tree<Node>> choices = new ArrayList<>();
 
   public ChoiceNode(final Tree<Node> choice1, final Tree<Node> choice2) {
     choices.add(choice1);

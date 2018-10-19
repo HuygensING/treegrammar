@@ -1,5 +1,6 @@
 package nl.knaw.huc.di.tag.treegrammar;
 
+import nl.knaw.huc.di.tag.treegrammar.expectations.*;
 import nl.knaw.huc.di.tag.treegrammar.nodes.*;
 import org.junit.jupiter.api.Test;
 
@@ -165,6 +166,35 @@ public class TransitionRuleFactoryTest {
         "HELLO => hello[OH _]\n" +
         "OH => oh[_]";
     assertValidationFailsWithExceptionMessage(rules, expectedExceptionMessage);
+  }
+
+  @Test
+  void testExpectations1() {
+    String rule = "# => name[FIRST LAST]";
+    Expectation[] expectedResult = new Expectation[]{
+        new MarkupStartExpectation("name"),
+        new PlaceHolderExpectation(new NonTerminalMarkupNode("FIRST")),
+        new PlaceHolderExpectation(new NonTerminalMarkupNode("LAST")),
+        new MarkupEndExpectation("name")
+    };
+    assertExpectationsMatch(rule, expectedResult);
+  }
+
+  @Test
+  void testExpectations2() {
+    String rule = "FIRST => first[_]";
+    Expectation[] expectedResult = new Expectation[]{
+        new MarkupStartExpectation("first"),
+        new TextExpectation(),
+        new MarkupEndExpectation("first")
+    };
+    assertExpectationsMatch(rule, expectedResult);
+  }
+
+  private void assertExpectationsMatch(final String rule, final Expectation[] expectedResult) {
+    TransitionRule transitionRule = TransitionRuleFactory.fromString(rule);
+    List<Expectation> expectations = TransitionRuleFactory.getExpectations(transitionRule);
+    assertThat(expectations).containsExactly(expectedResult);
   }
 
   private void assertRuleSetIsValid(final String[] rules) {

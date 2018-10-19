@@ -1,10 +1,13 @@
 package nl.knaw.huc.di.tag.treegrammar;
 
+import nl.knaw.huc.di.tag.treegrammar.expectations.Expectation;
+import nl.knaw.huc.di.tag.treegrammar.expectations.PlaceHolderExpectation;
 import nl.knaw.huc.di.tag.treegrammar.nodes.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 
@@ -23,6 +26,7 @@ class StateMachine {
   private final List<TransitionRule> rules = new ArrayList<>();
   private final Map<NonTerminalNode, Tree<Node>> nodeReplacementMap = new HashMap<>();
   private Deque<List<NonTerminalNode>> nonTerminalsStack = new ArrayDeque<>();
+  private List<Expectation> expectations = new ArrayList<>();
 
   public StateMachine() {
     init();
@@ -37,6 +41,7 @@ class StateMachine {
     ArrayList<NonTerminalNode> nonTerminals = new ArrayList<>();
     nonTerminals.add(startNode);
     nonTerminalsStack.push(nonTerminals);
+    expectations.add(new PlaceHolderExpectation(startNode));
   }
 
   public void addTransitionRule(TransitionRule transitionRule) {
@@ -62,7 +67,8 @@ class StateMachine {
   // zo niet; dan zitten we in een error.
   // input zou eigenlijk tree moeten zijn.
   public void processInput(Node node) {
-    LOG.info("processInput({})", node);
+    Expectation expectation = nextExpectation();
+    LOG.info("Input: {}, Expectation: {}", node, expectation);
 
     // We zoeken eerst op naar welke node de huidige pointer verwijst.
     // Dan kijken we welke transitierules er zijn voor dat type node.
@@ -86,28 +92,31 @@ class StateMachine {
       return;
     }
 
-    List<TransitionRule> applicableRules = rules.stream()
-        .filter(rule -> rule.lefthandsideIsApplicableFor(nonTerminalNode))
-        .collect(toList());
+    if (nonTerminalNode instanceof ChoiceNode) {
+      final ChoiceNode choice = (ChoiceNode) nonTerminalNode;
+      List<Tree<Node>> collect = choice.choices.stream().filter(t -> t.root.matches(node)).collect(Collectors.toList());
+      LOG.info("collect={}", collect);
+    }
 
-    LOG.info("applicableRules={}", applicableRules);
-    if (applicableRules.isEmpty()) {
+//    LOG.info("applicableRules={}", applicableRules);
+    if (!nodeReplacementMap.containsKey(nonTerminalNode)) {
       throw new RuntimeException("No transition rule found! Current state: " + node + ", expected: " + nonTerminalNode);
     }
-    TransitionRule theRule = applicableRules.get(0); // NOT correct
-    // if there are more transition rules, then make a ChoiceNode
-    LOG.info("Transition rule found: {}! We want to know the right hand side", theRule);
-    Tree<Node> righthandside = theRule.righthandside;
-    LOG.info("Expectation: {}", righthandside);
+//    TransitionRule theRule = applicableRules.get(0); // NOT correct
+//    // if there are more transition rules, then make a ChoiceNode
+//    LOG.info("Transition rule found: {}! We want to know the right hand side", theRule);
+//    Tree<Node> righthandside = theRule.righthandside;
+//    LOG.info("Expectation: {}", righthandside);
 
-    // Nu moeten we checken of de transitierule die we gevonden hebben ook past bij de wat binnen kregen
+    // Nu moeten we checken of de transitierule die we gevonden hebben ook past bij wat we binnen kregen
     // Ik weet nog niet hoe dat moet gewoon bij
     // We vervangen de aangewezen node door de nieuwe van de RHS
     // de current pointer moet dan naar het eerste kind van de RHS
     // NB: Dit is te simplistisch.
 
+    Tree<Node> potentialReplacement = nodeReplacementMap.get(nonTerminalNode);
     // check whether tag of right hand side is the same as the incoming tag.
-    if (righthandside.root.matches(node)) {
+    if (potentialReplacement.root.matches(node)) {
       // woohoo expectations matched!
       //throw new RuntimeException("expectations are met!");
       // set the current pointer
@@ -115,9 +124,9 @@ class StateMachine {
       // het gebeuren hier is wat moeilijk, want het kan zijn dat de root vervangen wordt..
 
       // als het om de root node gaat vervangen we gewoon de hele tree
-      final Node rootCopy = righthandside.root.copy();
-      final List<Node> childrenCopy = righthandside.children
-          .get(righthandside.root)
+      final Node rootCopy = potentialReplacement.root.copy();
+      final List<Node> childrenCopy = potentialReplacement.children
+          .get(potentialReplacement.root)
           .stream()
           .map(n -> n.copy())
           .collect(toList());
@@ -130,21 +139,50 @@ class StateMachine {
       }
       // gaat dit altijd goed... we will see
 //      nonTerminalNode = finalTheRule.righthandside.children.get(finalTheRule.righthandside.root).get(0);
-      List<NonTerminalNode> nonTerminalNodeList = theRule.righthandsideNonTerminals();
+      List<NonTerminalNode> nonTerminalNodeList = nonTerminals(potentialReplacement);
       nonTerminalsStack.push(nonTerminalNodeList);
 //      nonTerminalNode = theRule.firstNonTerminalNode().orElse(null);
 
       LOG.info("nonTerminalNode={}", nonTerminalNode);
-      if (theRule.hasNoRHSTerminals()) {
-        processInput(node);
-      }
+//      if (theRule.hasNoRHSTerminals()) {
+//        processInput(node);
+//      }
     } else {
-      throw new RuntimeException("No match: expected " + righthandside.root + " but found " + node);
+      throw new RuntimeException("No match: expected " + potentialReplacement.root + " but found " + node);
     }
     //! Dan gaan we op zoek naar de transitierule van de huidige state
     //! Gegeven de transitierule en de nieuwe op basis van de input.
     // we gaan alle transitierules af.
     // het zou beter zijn om dit te indexeren; maar ok..
+  }
+
+  private Expectation nextExpectation() {
+    Expectation expectation = null;
+    boolean goOn = true;
+    while (goOn) {
+      expectation = expectations.remove(0);
+      if (expectation instanceof PlaceHolderExpectation) {
+        final Node n = ((PlaceHolderExpectation) expectation).node;
+        List<TransitionRule> applicableRules = rules.stream()
+            .filter(rule -> rule.lefthandsideIsApplicableFor(n))
+            .collect(toList());
+        List<Expectation> newExpectations = TransitionRuleFactory.getExpectations(applicableRules.get(0));
+        expectations.addAll(0, newExpectations);
+      } else {
+        goOn = false;
+      }
+    }
+    return expectation;
+  }
+
+  private List<NonTerminalNode> nonTerminals(final Tree<Node> nodeTree) {
+    List<Node> treeNodes = new ArrayList<>();
+    treeNodes.add(nodeTree.root);
+    treeNodes.addAll(nodeTree.children.get(nodeTree.root));
+    return treeNodes.stream()
+        .filter(NonTerminalNode.class::isInstance)
+        .map(NonTerminalNode.class::cast)
+        .collect(toList());
   }
 
   public Tree<Node> getTree() {

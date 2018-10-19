@@ -20,4 +20,14 @@ public class StartNode implements NonTerminalNode {
   public Node copy() {
     return this;
   }
+
+  @Override
+  public int hashCode() {
+    return CIPHER.hashCode();
+  }
+
+  @Override
+  public boolean equals(final Object obj) {
+    return obj instanceof StartNode;
+  }
 }

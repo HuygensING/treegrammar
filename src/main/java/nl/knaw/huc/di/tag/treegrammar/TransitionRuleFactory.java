@@ -1,5 +1,6 @@
 package nl.knaw.huc.di.tag.treegrammar;
 
+import nl.knaw.huc.di.tag.treegrammar.expectations.*;
 import nl.knaw.huc.di.tag.treegrammar.nodes.*;
 
 import java.util.*;
@@ -211,4 +212,25 @@ class TransitionRuleFactory {
     ));
   }
 
+  public static List<Expectation> getExpectations(final TransitionRule transitionRule) {
+    Tree<Node> rhs = transitionRule.righthandside;
+    final List<Expectation> expectations = new ArrayList<>();
+    rhs.children.get(rhs.root).forEach(n -> {
+      if (n instanceof AnyTextNode) {
+        expectations.add(new TextExpectation());
+      } else if (n instanceof TagNode) {
+        String tag = ((TagNode) n).tag;
+        expectations.add(new MarkupStartExpectation(tag));
+        expectations.add(new MarkupEndExpectation(tag));
+      } else if (n instanceof NonTerminalNode) {
+        expectations.add(new PlaceHolderExpectation(n));
+      }
+    });
+    if (rhs.root instanceof TagNode) {
+      String tag = ((TagNode) rhs.root).tag;
+      expectations.add(0, new MarkupStartExpectation(tag));
+      expectations.add(new MarkupEndExpectation(tag));
+    }
+    return expectations;
+  }
 }
