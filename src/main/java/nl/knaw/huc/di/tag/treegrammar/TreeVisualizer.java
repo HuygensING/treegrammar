@@ -1,3 +1,5 @@
+package nl.knaw.huc.di.tag.treegrammar;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +22,5 @@ class TreeVisualizer {
         }
     );
   }
-
 
 }

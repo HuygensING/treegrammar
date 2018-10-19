@@ -1,4 +1,4 @@
-package nodes;
+package nl.knaw.huc.di.tag.treegrammar.nodes;
 
 /**
  * Created by ronalddekker on 28/09/18.
@@ -18,5 +18,10 @@ public class TagNode implements TerminalNode {
   @Override
   public boolean matches(Node node) {
     return node instanceof TagNode && ((TagNode) node).tag.equals(tag);
+  }
+
+  @Override
+  public Node copy() {
+    return new TagNode(tag);
   }
 }

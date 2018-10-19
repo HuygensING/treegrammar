@@ -1,4 +1,4 @@
-package nodes;
+package nl.knaw.huc.di.tag.treegrammar.nodes;
 
 public class AnyTextNode implements NonTerminalNode {
 
@@ -15,5 +15,10 @@ public class AnyTextNode implements NonTerminalNode {
   @Override
   public boolean matches(Node node) {
     return node instanceof TextNode;
+  }
+
+  @Override
+  public Node copy() {
+    return this;
   }
 }

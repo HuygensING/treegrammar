@@ -1,12 +1,10 @@
-import nodes.AnyTextNode;
-import nodes.Node;
-import nodes.NonTerminalNode;
-import nodes.StartNode;
+package nl.knaw.huc.di.tag.treegrammar;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
+import nl.knaw.huc.di.tag.treegrammar.nodes.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 import static java.util.stream.Collectors.toList;
 
@@ -20,17 +18,22 @@ import static java.util.stream.Collectors.toList;
  * die je kunt vervangen.
  */
 class StateMachine {
+  private static final Logger LOG = LoggerFactory.getLogger(StateMachine.class);
   private Tree<Node> completeTree; // tree die we aan het opbouwen zijn
-  //  private Node pointerToCurrentNode;
-  private final List<TransitionRule> rules;
+  private final List<TransitionRule> rules = new ArrayList<>();
+  private final Map<NonTerminalNode, Tree<Node>> nodeReplacementMap = new HashMap<>();
   private Deque<List<NonTerminalNode>> nonTerminalsStack = new ArrayDeque<>();
 
   public StateMachine() {
+    init();
+  }
+
+  private void init() {
     StartNode startNode = new StartNode();
     this.completeTree = new Tree<>(startNode);
 //    this.pointerToCurrentNode = startNode;
     // nu hebben we nog transitie rules nodig.
-    this.rules = new ArrayList<>();
+    nonTerminalsStack.clear();
     ArrayList<NonTerminalNode> nonTerminals = new ArrayList<>();
     nonTerminals.add(startNode);
     nonTerminalsStack.push(nonTerminals);
@@ -38,14 +41,28 @@ class StateMachine {
 
   public void addTransitionRule(TransitionRule transitionRule) {
     this.rules.add(transitionRule);
+
+    final NonTerminalNode lhs = transitionRule.lefthandside;
+    if (nodeReplacementMap.containsKey(lhs)) {
+      ChoiceNode choiceNode = new ChoiceNode(nodeReplacementMap.get(lhs), transitionRule.righthandside);
+
+      final Tree<Node> choiceNodeAsTree = new Tree<>(choiceNode);
+      nodeReplacementMap.put(lhs, choiceNodeAsTree);
+
+    } else {
+      nodeReplacementMap.put(lhs, transitionRule.righthandside);
+    }
   }
 
-  // bij de state machine komen zaken binnen; input
-  // dan moeten we kijken aan de hand van de input of er een transitie rule voor is.
+  // bij de state machine komen nodes binnen
+  // In de tree die we aan het bouwen zijn zitten nog NonTerminal nodes, waarvan er 1 aan de beurt is om vervangen te worden.
+  // We zoeken nu een transition rule die deze NonTerminal aan de linkerkant heeft, en
+  // matched met de binnenkomende node
+
   // zo niet; dan zitten we in een error.
   // input zou eigenlijk tree moeten zijn.
   public void processInput(Node node) {
-    System.out.println("processInput(" + node + ")");
+    LOG.info("processInput({})", node);
 
     // We zoeken eerst op naar welke node de huidige pointer verwijst.
     // Dan kijken we welke transitierules er zijn voor dat type node.
@@ -64,7 +81,7 @@ class StateMachine {
         completeTree.root = node;
       } else {
         Tree nodeAsTree = new Tree(node);
-        completeTree.mergeTreeIntoCurrentTree(nodeAsTree, nonTerminalNode);
+        completeTree.mergeTreeIntoCurrentTree(nonTerminalNode, nodeAsTree);
       }
       return;
     }
@@ -73,13 +90,15 @@ class StateMachine {
         .filter(rule -> rule.lefthandsideIsApplicableFor(nonTerminalNode))
         .collect(toList());
 
-    System.out.println("applicableRules=" + applicableRules);
+    LOG.info("applicableRules={}", applicableRules);
     if (applicableRules.isEmpty()) {
       throw new RuntimeException("No transition rule found! Current state: " + node + ", expected: " + nonTerminalNode);
     }
-    TransitionRule theRule = applicableRules.get(0);
-    System.out.println("Transition rule found: " + theRule + "! We want to know the right hand side");
-    System.out.println("Expectation: " + theRule.righthandside);
+    TransitionRule theRule = applicableRules.get(0); // NOT correct
+    // if there are more transition rules, then make a ChoiceNode
+    LOG.info("Transition rule found: {}! We want to know the right hand side", theRule);
+    Tree<Node> righthandside = theRule.righthandside;
+    LOG.info("Expectation: {}", righthandside);
 
     // Nu moeten we checken of de transitierule die we gevonden hebben ook past bij de wat binnen kregen
     // Ik weet nog niet hoe dat moet gewoon bij
@@ -88,7 +107,7 @@ class StateMachine {
     // NB: Dit is te simplistisch.
 
     // check whether tag of right hand side is the same as the incoming tag.
-    if (theRule.righthandside.root.matches(node)) {
+    if (righthandside.root.matches(node)) {
       // woohoo expectations matched!
       //throw new RuntimeException("expectations are met!");
       // set the current pointer
@@ -96,10 +115,18 @@ class StateMachine {
       // het gebeuren hier is wat moeilijk, want het kan zijn dat de root vervangen wordt..
 
       // als het om de root node gaat vervangen we gewoon de hele tree
+      final Node rootCopy = righthandside.root.copy();
+      final List<Node> childrenCopy = righthandside.children
+          .get(righthandside.root)
+          .stream()
+          .map(n -> n.copy())
+          .collect(toList());
+      Tree<Node> rhsCopy = new Tree<>(rootCopy, childrenCopy);
+//      Tree<Node> rhsCopy = righthandside;
       if (nonTerminalNode == completeTree.root) {
-        completeTree = theRule.righthandside;
+        completeTree = rhsCopy;
       } else {
-        completeTree.mergeTreeIntoCurrentTree(theRule.righthandside, nonTerminalNode);
+        completeTree.mergeTreeIntoCurrentTree(nonTerminalNode, rhsCopy);
       }
       // gaat dit altijd goed... we will see
 //      nonTerminalNode = finalTheRule.righthandside.children.get(finalTheRule.righthandside.root).get(0);
@@ -107,14 +134,14 @@ class StateMachine {
       nonTerminalsStack.push(nonTerminalNodeList);
 //      nonTerminalNode = theRule.firstNonTerminalNode().orElse(null);
 
-      System.out.println("nonTerminalNode=" + nonTerminalNode);
+      LOG.info("nonTerminalNode={}", nonTerminalNode);
       if (theRule.hasNoRHSTerminals()) {
         processInput(node);
       }
     } else {
-      throw new RuntimeException("No match: expected " + theRule.righthandside.root + " but found " + node);
+      throw new RuntimeException("No match: expected " + righthandside.root + " but found " + node);
     }
-    //! Dan gaan we opzoek naar de transitierule van de huidige state
+    //! Dan gaan we op zoek naar de transitierule van de huidige state
     //! Gegeven de transitierule en de nieuwe op basis van de input.
     // we gaan alle transitierules af.
     // het zou beter zijn om dit te indexeren; maar ok..
@@ -126,5 +153,9 @@ class StateMachine {
 
   public void pop() {
     nonTerminalsStack.pop();
+  }
+
+  public void reset() {
+    init();
   }
 }

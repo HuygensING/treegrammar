@@ -1,10 +1,13 @@
+package nl.knaw.huc.di.tag.treegrammar;
 /*
  * Hier schetsen we eerst wat uit...
  * Ik wil een stukje code die stax parse events gooit en verwerkt.
  */
 
-import nodes.Node;
+import nl.knaw.huc.di.tag.treegrammar.nodes.Node;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.stream.XMLStreamException;
 import java.util.ArrayList;
@@ -16,6 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
 class ValidationTest {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ValidationTest.class);
 
   @Test
   void testXMLParses() throws XMLStreamException {
@@ -85,10 +90,54 @@ class ValidationTest {
     assertTreeVisualisation(validator, expected);
   }
 
+  @Test
+  void testMultipleTransitionRulesForNonterminal() throws XMLStreamException {
+    String[] ruleStrings = {
+        "# => artist[NAME]",
+        "NAME => name[FIRST LAST]",
+        "NAME => name[ARTISTNAME]",
+        "FIRST => first[_]",
+        "LAST => last[_]",
+        "ARTISTNAME => artistname[_]"
+    };
+    final List<TransitionRule> transitionRules = stream(ruleStrings)
+        .map(TransitionRuleFactory::fromString)
+        .collect(toList());
+
+    LOG.info("transitionrules={}", transitionRules);
+    XMLValidatorUsingTreeGrammars validator = new XMLValidatorUsingTreeGrammars(transitionRules);
+    validator.parse("<artist>" +
+        "<name>" +
+        "<first>John</first>" +
+        "<last>Doe</last>" +
+        "</name>" +
+        "</artist>");
+    String expected = "artist\n" +
+        "| name\n" +
+        "| | first\n" +
+        "| | | \"John\"\n" +
+        "| | last\n" +
+        "| | | \"Doe\"";
+    assertTreeVisualisation(validator, expected);
+    LOG.info("transitionrules={}", transitionRules);
+
+    validator.reset();
+    validator.parse("<artist>" +
+        "<name>" +
+        "<artistname>The JohnDoes</artistname>" +
+        "</name>" +
+        "</artist>");
+    String expected2 = "artist\n" +
+        "| name\n" +
+        "| | artistname\n" +
+        "| | | \"The JohnDoes\"\n";
+    assertTreeVisualisation(validator, expected2);
+  }
+
   private void assertTreeVisualisation(final XMLValidatorUsingTreeGrammars validator, final String expected) {
     Tree<Node> tree = validator.getTree();
     String asText = TreeVisualizer.asText(tree);
-    System.out.println(asText);
+    LOG.info(asText);
     assertThat(asText).isEqualTo(expected);
   }
 

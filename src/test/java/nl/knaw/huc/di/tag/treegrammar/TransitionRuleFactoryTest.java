@@ -1,4 +1,6 @@
-import nodes.*;
+package nl.knaw.huc.di.tag.treegrammar;
+
+import nl.knaw.huc.di.tag.treegrammar.nodes.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

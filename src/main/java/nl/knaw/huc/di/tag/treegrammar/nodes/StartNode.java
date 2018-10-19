@@ -1,4 +1,4 @@
-package nodes;
+package nl.knaw.huc.di.tag.treegrammar.nodes;
 
 public class StartNode implements NonTerminalNode {
   public static final String CIPHER = "#";
@@ -14,5 +14,10 @@ public class StartNode implements NonTerminalNode {
   @Override
   public boolean matches(Node node) {
     return node instanceof StartNode;
+  }
+
+  @Override
+  public Node copy() {
+    return this;
   }
 }

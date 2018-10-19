@@ -1,3 +1,5 @@
+package nl.knaw.huc.di.tag.treegrammar;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,8 +17,8 @@ import static java.util.stream.Collectors.joining;
  * This makes it easier to specify the root.
  * Also it makes it easier to merge two trees etc.
  */
-class Tree<T> {
-  T root;
+public class Tree<T> {
+  public T root;
   // Every node in the tree has a list of children
   final Map<T, List<T>> children;
   // Every node has one parent; this map maps the node to the parent; so reverse
@@ -51,7 +53,7 @@ class Tree<T> {
     parents.remove(child, parent);
   }
 
-  public void mergeTreeIntoCurrentTree(Tree<T> toMerge, T nodeToReplace) {
+  public void mergeTreeIntoCurrentTree(T nodeToReplace, Tree<T> toMerge) {
     // Copy the children map from the tree container to merge, and connect the parent of the node to replace
     // with the root of the tree to merge
 //    this.children.remove(nodeToReplace);
@@ -76,4 +78,5 @@ class Tree<T> {
     result.append(children).append("]");
     return result.toString();
   }
+
 }

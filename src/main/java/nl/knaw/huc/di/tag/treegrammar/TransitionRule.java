@@ -1,7 +1,9 @@
-import nodes.Node;
-import nodes.NonTerminalMarkupNode;
-import nodes.NonTerminalNode;
-import nodes.TerminalNode;
+package nl.knaw.huc.di.tag.treegrammar;
+
+import nl.knaw.huc.di.tag.treegrammar.nodes.Node;
+import nl.knaw.huc.di.tag.treegrammar.nodes.NonTerminalMarkupNode;
+import nl.knaw.huc.di.tag.treegrammar.nodes.NonTerminalNode;
+import nl.knaw.huc.di.tag.treegrammar.nodes.TerminalNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,15 +19,15 @@ import static java.util.stream.Collectors.toList;
 // Een right hand side: that is een tree.
 class TransitionRule {
   final NonTerminalNode lefthandside;
-  final Tree<Node> righthandside;
+  final nl.knaw.huc.di.tag.treegrammar.Tree<Node> righthandside;
 
-  public TransitionRule(NonTerminalNode lefthandside, Tree<Node> righthandside) {
+  public TransitionRule(NonTerminalNode lefthandside, nl.knaw.huc.di.tag.treegrammar.Tree<Node> righthandside) {
     this.lefthandside = lefthandside;
     this.righthandside = righthandside;
   }
 
   public boolean lefthandsideIsApplicableFor(Node node) {
-    // System.out.println("Checking with "+lefthandside.tag+" and "+tag);
+    // LOG.info("Checking with "+lefthandside.tag+" and "+tag);
     // de lefthandside is een tree node zonder kinderen...
     // We kijken of de tag vergelijkbaar is
     return lefthandside.matches(node);
