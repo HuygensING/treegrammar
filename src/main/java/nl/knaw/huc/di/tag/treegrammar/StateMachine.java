@@ -128,7 +128,7 @@ class StateMachine {
       final List<Node> childrenCopy = potentialReplacement.children
           .get(potentialReplacement.root)
           .stream()
-          .map(n -> n.copy())
+          .map(Node::copy)
           .collect(toList());
       Tree<Node> rhsCopy = new Tree<>(rootCopy, childrenCopy);
 //      Tree<Node> rhsCopy = righthandside;

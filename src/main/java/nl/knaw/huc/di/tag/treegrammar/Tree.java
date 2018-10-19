@@ -43,7 +43,7 @@ public class Tree<T> {
   }
 
   private void connect(T parent, T child) {
-    children.putIfAbsent(parent, new ArrayList<T>());
+    children.putIfAbsent(parent, new ArrayList<>());
     children.get(parent).add(child);
     parents.put(child, parent);
   }
