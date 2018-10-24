@@ -1,14 +1,15 @@
 package nl.knaw.huc.di.tag.treegrammar;
 
-import nl.knaw.huc.di.tag.treegrammar.expectations.Expectation;
-import nl.knaw.huc.di.tag.treegrammar.expectations.PlaceHolderExpectation;
+import nl.knaw.huc.di.tag.treegrammar.expectations.*;
 import nl.knaw.huc.di.tag.treegrammar.nodes.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.stream.events.EndElement;
+import javax.xml.stream.events.XMLEvent;
 import java.util.*;
-import java.util.stream.Collectors;
 
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 
 /*
@@ -66,9 +67,21 @@ class StateMachine {
 
   // zo niet; dan zitten we in een error.
   // input zou eigenlijk tree moeten zijn.
-  public void processInput(Node node) {
+  public void processInput(Node node, XMLEvent xmlEvent) {
     Expectation expectation = nextExpectation();
     LOG.info("Input: {}, Expectation: {}", node, expectation);
+    boolean matches;
+    if (expectation instanceof ChoiceExpectation) {
+      ChoiceExpectation che = (ChoiceExpectation) expectation;
+      matches = che.matches(xmlEvent);
+    } else {
+      ConcreteExpectation ce = (ConcreteExpectation) expectation;
+      matches = ce.matches(xmlEvent);
+    }
+
+    if (!matches) {
+      throw new RuntimeException("Unexpected XMLEvent: expected " + expectation + ", got " + xmlEvent);
+    }
 
     // We zoeken eerst op naar welke node de huidige pointer verwijst.
     // Dan kijken we welke transitierules er zijn voor dat type node.
@@ -94,14 +107,14 @@ class StateMachine {
 
     if (nonTerminalNode instanceof ChoiceNode) {
       final ChoiceNode choice = (ChoiceNode) nonTerminalNode;
-      List<Tree<Node>> collect = choice.choices.stream().filter(t -> t.root.matches(node)).collect(Collectors.toList());
+      List<Tree<Node>> collect = choice.choices.stream().filter(t -> t.root.matches(node)).collect(toList());
       LOG.info("collect={}", collect);
     }
 
 //    LOG.info("applicableRules={}", applicableRules);
-    if (!nodeReplacementMap.containsKey(nonTerminalNode)) {
-      throw new RuntimeException("No transition rule found! Current state: " + node + ", expected: " + nonTerminalNode);
-    }
+//    if (!nodeReplacementMap.containsKey(nonTerminalNode)) {
+//      throw new RuntimeException("No transition rule found! Current state: " + node + ", expected: " + nonTerminalNode);
+//    }
 //    TransitionRule theRule = applicableRules.get(0); // NOT correct
 //    // if there are more transition rules, then make a ChoiceNode
 //    LOG.info("Transition rule found: {}! We want to know the right hand side", theRule);
@@ -115,6 +128,9 @@ class StateMachine {
     // NB: Dit is te simplistisch.
 
     Tree<Node> potentialReplacement = nodeReplacementMap.get(nonTerminalNode);
+    if (potentialReplacement == null) {
+      throw new RuntimeException("No replacement for " + nonTerminalNode);
+    }
     // check whether tag of right hand side is the same as the incoming tag.
     if (potentialReplacement.root.matches(node)) {
       // woohoo expectations matched!
@@ -166,13 +182,71 @@ class StateMachine {
         List<TransitionRule> applicableRules = rules.stream()
             .filter(rule -> rule.lefthandsideIsApplicableFor(n))
             .collect(toList());
-        List<Expectation> newExpectations = TransitionRuleFactory.getExpectations(applicableRules.get(0));
-        expectations.addAll(0, newExpectations);
+        if (applicableRules.size() > 1) {
+          List<List<Expectation>> choices = new ArrayList<>();
+          applicableRules.forEach(r -> {
+            List<Expectation> optionalExpectations = TransitionRuleFactory.getExpectations(r);
+            choices.add(optionalExpectations);
+          });
+          ChoiceExpectation choiceExpectation = new ChoiceExpectation(choices);
+          expectations.add(0, choiceExpectation);
+
+        } else {
+          TransitionRule transitionRule = applicableRules.get(0);
+          List<Expectation> newExpectations = TransitionRuleFactory.getExpectations(transitionRule);
+          expectations.addAll(0, newExpectations);
+        }
+      } else if (expectation instanceof ChoiceExpectation) {
+        ChoiceExpectation ce = (ChoiceExpectation) expectation;
+        List<Expectation> roots = ce.choices.stream()
+            .map(c -> c.remove(0))
+            .collect(toList());
+        Set<Expectation> rootSet = new HashSet<>(roots);
+        if (rootSet.size() == 1) {
+          expectation = roots.get(0);
+        } else {
+          List<List<Expectation>> param = roots.stream()
+              .map(this::makeConcrete)
+              .map(e -> singletonList(e))
+              .collect(toList());
+          expectation = new ChoiceExpectation(param);
+        }
+        expectations.add(0, ce);
+        goOn = false;
+
       } else {
         goOn = false;
       }
     }
+    LOG.info("expectation={}, next expectations={}", expectation, expectations);
     return expectation;
+  }
+
+  private Expectation makeConcrete(Expectation expectation) {
+    if (expectation instanceof ConcreteExpectation) {
+      return expectation;
+    } else if (expectation instanceof PlaceHolderExpectation) {
+      final Node n = ((PlaceHolderExpectation) expectation).node;
+      List<TransitionRule> applicableRules = rules.stream()
+          .filter(rule -> rule.lefthandsideIsApplicableFor(n))
+          .collect(toList());
+      if (applicableRules.size() > 1) {
+        List<List<Expectation>> choices = new ArrayList<>();
+        applicableRules.forEach(r -> {
+          List<Expectation> optionalExpectations = TransitionRuleFactory.getExpectations(r);
+          choices.add(optionalExpectations);
+        });
+        ChoiceExpectation choiceExpectation = new ChoiceExpectation(choices);
+        expectations.add(0, choiceExpectation);
+
+      } else {
+        TransitionRule transitionRule = applicableRules.get(0);
+        List<Expectation> newExpectations = TransitionRuleFactory.getExpectations(transitionRule);
+        expectations.addAll(0, newExpectations);
+      }
+      return nextExpectation();
+    }
+    return null;
   }
 
   private List<NonTerminalNode> nonTerminals(final Tree<Node> nodeTree) {
@@ -189,8 +263,14 @@ class StateMachine {
     return completeTree;
   }
 
-  public void pop() {
+  public void pop(EndElement endElement) {
     nonTerminalsStack.pop();
+    Expectation expectation = nextExpectation();
+    LOG.info("Input: {endElement}, Expectation: {}", expectation);
+    if (!(expectation instanceof MarkupEndExpectation)) {
+      throw new RuntimeException("Expected " + expectation + ", got " + endElement);
+    }
+
   }
 
   public void reset() {

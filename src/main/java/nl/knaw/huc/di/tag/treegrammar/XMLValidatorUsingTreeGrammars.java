@@ -39,16 +39,16 @@ class XMLValidatorUsingTreeGrammars {
         StartElement s = xmlEvent.asStartElement();
         String tag = s.getName().getLocalPart();
         Node tagNode = new TagNode(tag);
-        stateMachine.processInput(tagNode);
+        stateMachine.processInput(tagNode, xmlEvent);
 
       } else if (xmlEvent.isCharacters()) {
         Characters characters = xmlEvent.asCharacters();
         String content = characters.toString();
         Node textNode = new TextNode(content);
-        stateMachine.processInput(textNode);
+        stateMachine.processInput(textNode, xmlEvent);
 
       } else if (xmlEvent.isEndElement()) {
-        stateMachine.pop();
+        stateMachine.pop(xmlEvent.asEndElement());
       }
 //      LOG.info();
     }

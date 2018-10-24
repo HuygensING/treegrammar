@@ -2,6 +2,8 @@ package nl.knaw.huc.di.tag.treegrammar.expectations;
 
 import nl.knaw.huc.di.tag.treegrammar.nodes.Node;
 
+import javax.xml.stream.events.XMLEvent;
+
 public class PlaceHolderExpectation implements AbstractExpectation {
   public Node node;
 
@@ -23,5 +25,10 @@ public class PlaceHolderExpectation implements AbstractExpectation {
   @Override
   public String toString() {
     return "<% " + node + " %>";
+  }
+
+  @Override
+  public boolean matches(XMLEvent xmlEvent) {
+    return false;
   }
 }

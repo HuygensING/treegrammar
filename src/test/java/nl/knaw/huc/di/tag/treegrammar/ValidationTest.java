@@ -40,7 +40,7 @@ class ValidationTest {
       validator.parse("<root><markup>tekst and <b>more</b> markup</markup></root>");
       fail("Expected an exception");
     } catch (Exception e) {
-      assertThat(e).hasMessage("Unexpected node b");
+      assertThat(e).hasMessage("Unexpected XMLEvent: expected </markup>, got <b>");
     }
   }
 
@@ -51,7 +51,7 @@ class ValidationTest {
       validator.parse("<root>plain tekst and <markup>marked-up tekst</markup></root>");
       fail("Expected an exception");
     } catch (Exception e) {
-      assertThat(e).hasMessage("No match: expected markup but found \"plain tekst and \"");
+      assertThat(e).hasMessage("Unexpected XMLEvent: expected <markup>, got plain tekst and ");
     }
   }
 
@@ -137,7 +137,7 @@ class ValidationTest {
   private void assertTreeVisualisation(final XMLValidatorUsingTreeGrammars validator, final String expected) {
     Tree<Node> tree = validator.getTree();
     String asText = TreeVisualizer.asText(tree);
-    LOG.info(asText);
+    LOG.info("\n{}", asText);
     assertThat(asText).isEqualTo(expected);
   }
 
