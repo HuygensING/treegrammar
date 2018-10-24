@@ -90,7 +90,7 @@ class StateMachine {
     }
 
 //    LOG.info("applicableRules={}", applicableRules);
-    if (nonTerminalNodes.stream().noneMatch(n -> nodeReplacementMap.containsKey(n))) {
+    if (nonTerminalNodes.stream().noneMatch(nodeReplacementMap::containsKey)) {
       throw new RuntimeException(format("No transition rule found! Current state: {0}, expected: {1}", node, nonTerminalNode));
     }
 //    TransitionRule theRule = applicableRules.get(0); // NOT correct
@@ -118,7 +118,7 @@ class StateMachine {
           final String expectation = nonTerminalNodes.stream()
               .map(nodeReplacementMap::get)
               .map(t -> t.root)
-              .filter(n -> n != null)
+              .filter(Objects::nonNull)
               .map(Object::toString)
               .collect(joining(" or "));
           String message = format("No match: expected {0} but found {1}", expectation, node);
@@ -128,8 +128,7 @@ class StateMachine {
     final Node rootCopy = replacementTree.root == null
         ? null
         : replacementTree.root.copy();
-    final List<Node> childrenCopy = replacementTree.children
-        .get(replacementTree.root)
+    final List<Node> childrenCopy = replacementTree.getRootChildren()
         .stream()
         .map(Node::copy)
         .collect(toList());
