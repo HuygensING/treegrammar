@@ -1,7 +1,5 @@
 package nl.knaw.huc.di.tag.treegrammar;
 
-import nl.knaw.huc.di.tag.treegrammar.expectations.Expectation;
-import nl.knaw.huc.di.tag.treegrammar.expectations.PlaceHolderExpectation;
 import nl.knaw.huc.di.tag.treegrammar.nodes.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +24,6 @@ class StateMachine {
   private final List<TransitionRule> rules = new ArrayList<>();
   private final Map<NonTerminalNode, Tree<Node>> nodeReplacementMap = new HashMap<>();
   private Deque<List<NonTerminalNode>> nonTerminalsStack = new ArrayDeque<>();
-  private List<Expectation> expectations = new ArrayList<>();
 
   public StateMachine() {
     init();
@@ -41,7 +38,6 @@ class StateMachine {
     ArrayList<NonTerminalNode> nonTerminals = new ArrayList<>();
     nonTerminals.add(startNode);
     nonTerminalsStack.push(nonTerminals);
-    expectations.add(new PlaceHolderExpectation(startNode));
   }
 
   public void addTransitionRule(TransitionRule transitionRule) {
@@ -67,9 +63,6 @@ class StateMachine {
   // zo niet; dan zitten we in een error.
   // input zou eigenlijk tree moeten zijn.
   public void processInput(Node node) {
-    Expectation expectation = nextExpectation();
-    LOG.info("Input: {}, Expectation: {}", node, expectation);
-
     // We zoeken eerst op naar welke node de huidige pointer verwijst.
     // Dan kijken we welke transitierules er zijn voor dat type node.
     List<NonTerminalNode> nonTerminalsToProcess = nonTerminalsStack.peek();
@@ -154,25 +147,6 @@ class StateMachine {
     //! Gegeven de transitierule en de nieuwe op basis van de input.
     // we gaan alle transitierules af.
     // het zou beter zijn om dit te indexeren; maar ok..
-  }
-
-  private Expectation nextExpectation() {
-    Expectation expectation = null;
-    boolean goOn = true;
-    while (goOn) {
-      expectation = expectations.remove(0);
-      if (expectation instanceof PlaceHolderExpectation) {
-        final Node n = ((PlaceHolderExpectation) expectation).node;
-        List<TransitionRule> applicableRules = rules.stream()
-            .filter(rule -> rule.lefthandsideIsApplicableFor(n))
-            .collect(toList());
-        List<Expectation> newExpectations = TransitionRuleFactory.getExpectations(applicableRules.get(0));
-        expectations.addAll(0, newExpectations);
-      } else {
-        goOn = false;
-      }
-    }
-    return expectation;
   }
 
   private List<NonTerminalNode> nonTerminals(final Tree<Node> nodeTree) {
