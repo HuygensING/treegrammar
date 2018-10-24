@@ -5,8 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
+import static java.text.MessageFormat.format;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 /*
@@ -23,7 +25,7 @@ class StateMachine {
   private Tree<Node> completeTree; // tree die we aan het opbouwen zijn
   private final List<TransitionRule> rules = new ArrayList<>();
   private final Map<NonTerminalNode, Tree<Node>> nodeReplacementMap = new HashMap<>();
-  private Deque<List<NonTerminalNode>> nonTerminalsStack = new ArrayDeque<>();
+  private final Deque<List<NonTerminalNode>> nonTerminalsStack = new ArrayDeque<>();
 
   public StateMachine() {
     init();
@@ -44,15 +46,7 @@ class StateMachine {
     this.rules.add(transitionRule);
 
     final NonTerminalNode lhs = transitionRule.lefthandside;
-    if (nodeReplacementMap.containsKey(lhs)) {
-      ChoiceNode choiceNode = new ChoiceNode(nodeReplacementMap.get(lhs), transitionRule.righthandside);
-
-      final Tree<Node> choiceNodeAsTree = new Tree<>(choiceNode);
-      nodeReplacementMap.put(lhs, choiceNodeAsTree);
-
-    } else {
-      nodeReplacementMap.put(lhs, transitionRule.righthandside);
-    }
+    nodeReplacementMap.put(lhs, transitionRule.righthandside);
   }
 
   // bij de state machine komen nodes binnen
@@ -85,15 +79,19 @@ class StateMachine {
       return;
     }
 
+    final List<Node> nonTerminalNodes;
     if (nonTerminalNode instanceof ChoiceNode) {
-      final ChoiceNode choice = (ChoiceNode) nonTerminalNode;
-      List<Tree<Node>> collect = choice.choices.stream().filter(t -> t.root.matches(node)).collect(Collectors.toList());
-      LOG.info("collect={}", collect);
+      nonTerminalNodes = ((ChoiceNode) nonTerminalNode).choices.stream()
+          .filter(t -> t.matches(node))
+          .collect(toList());
+
+    } else {
+      nonTerminalNodes = singletonList(nonTerminalNode);
     }
 
 //    LOG.info("applicableRules={}", applicableRules);
-    if (!nodeReplacementMap.containsKey(nonTerminalNode)) {
-      throw new RuntimeException("No transition rule found! Current state: " + node + ", expected: " + nonTerminalNode);
+    if (nonTerminalNodes.stream().noneMatch(n -> nodeReplacementMap.containsKey(n))) {
+      throw new RuntimeException(format("No transition rule found! Current state: {0}, expected: {1}", node, nonTerminalNode));
     }
 //    TransitionRule theRule = applicableRules.get(0); // NOT correct
 //    // if there are more transition rules, then make a ChoiceNode
@@ -107,42 +105,45 @@ class StateMachine {
     // de current pointer moet dan naar het eerste kind van de RHS
     // NB: Dit is te simplistisch.
 
-    Tree<Node> potentialReplacement = nodeReplacementMap.get(nonTerminalNode);
+    //    Tree<Node> potentialReplacement = nodeReplacementMap.get(nonTerminalNode);
     // check whether tag of right hand side is the same as the incoming tag.
-    if (potentialReplacement.root.matches(node)) {
-      // woohoo expectations matched!
-      //throw new RuntimeException("expectations are met!");
-      // set the current pointer
-      // aargh we now need a replace, with a parent value, which we don't have yet
-      // het gebeuren hier is wat moeilijk, want het kan zijn dat de root vervangen wordt..
+    Tree<Node> replacementTree = nonTerminalNodes.stream()
+        .map(nodeReplacementMap::get)
+        .filter(t -> t.root == null
+            ? t.getRootChildren().get(0).matches(node)
+            : t.root.matches(node)
+        )
+        .findFirst()
+        .orElseThrow(() -> {
+          final String expectation = nonTerminalNodes.stream()
+              .map(nodeReplacementMap::get)
+              .map(t -> t.root)
+              .filter(n -> n != null)
+              .map(Object::toString)
+              .collect(joining(" or "));
+          String message = format("No match: expected {0} but found {1}", expectation, node);
+          return new RuntimeException(message);
+        });
 
-      // als het om de root node gaat vervangen we gewoon de hele tree
-      final Node rootCopy = potentialReplacement.root.copy();
-      final List<Node> childrenCopy = potentialReplacement.children
-          .get(potentialReplacement.root)
-          .stream()
-          .map(Node::copy)
-          .collect(toList());
-      Tree<Node> rhsCopy = new Tree<>(rootCopy, childrenCopy);
-//      Tree<Node> rhsCopy = righthandside;
-      if (nonTerminalNode == completeTree.root) {
-        completeTree = rhsCopy;
-      } else {
-        completeTree.mergeTreeIntoCurrentTree(nonTerminalNode, rhsCopy);
-      }
-      // gaat dit altijd goed... we will see
-//      nonTerminalNode = finalTheRule.righthandside.children.get(finalTheRule.righthandside.root).get(0);
-      List<NonTerminalNode> nonTerminalNodeList = nonTerminals(potentialReplacement);
-      nonTerminalsStack.push(nonTerminalNodeList);
+    final Node rootCopy = replacementTree.root == null
+        ? null
+        : replacementTree.root.copy();
+    final List<Node> childrenCopy = replacementTree.children
+        .get(replacementTree.root)
+        .stream()
+        .map(Node::copy)
+        .collect(toList());
+    Tree<Node> rhsCopy = new Tree<>(rootCopy, childrenCopy);
+    if (nonTerminalNode == completeTree.root) {
+      completeTree = rhsCopy;
+    } else {
+      completeTree.mergeTreeIntoCurrentTree(nonTerminalNode, rhsCopy);
+    }
+    List<NonTerminalNode> nonTerminalNodeList = nonTerminals(replacementTree);
+    nonTerminalsStack.push(nonTerminalNodeList);
 //      nonTerminalNode = theRule.firstNonTerminalNode().orElse(null);
 
-      LOG.info("nonTerminalNode={}", nonTerminalNode);
-//      if (theRule.hasNoRHSTerminals()) {
-//        processInput(node);
-//      }
-    } else {
-      throw new RuntimeException("No match: expected " + potentialReplacement.root + " but found " + node);
-    }
+    LOG.info("nonTerminalNode={}", nonTerminalNode);
     //! Dan gaan we op zoek naar de transitierule van de huidige state
     //! Gegeven de transitierule en de nieuwe op basis van de input.
     // we gaan alle transitierules af.
@@ -152,7 +153,7 @@ class StateMachine {
   private List<NonTerminalNode> nonTerminals(final Tree<Node> nodeTree) {
     List<Node> treeNodes = new ArrayList<>();
     treeNodes.add(nodeTree.root);
-    treeNodes.addAll(nodeTree.children.get(nodeTree.root));
+    treeNodes.addAll(nodeTree.getRootChildren());
     return treeNodes.stream()
         .filter(NonTerminalNode.class::isInstance)
         .map(NonTerminalNode.class::cast)

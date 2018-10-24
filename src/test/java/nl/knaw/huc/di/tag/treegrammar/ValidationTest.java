@@ -94,8 +94,10 @@ class ValidationTest {
   void testMultipleTransitionRulesForNonterminal() throws XMLStreamException {
     String[] ruleStrings = {
         "# => artist[NAME]",
-        "NAME => name[FIRST LAST]",
-        "NAME => name[ARTISTNAME]",
+        "NAME => name[(FIRST_LAST|ARTISTNAME)]",
+//        "NAME => name[FIRST LAST]",
+//        "NAME => name[ARTISTNAME]",
+        "FIRST_LAST => [FIRST LAST]",
         "FIRST => first[_]",
         "LAST => last[_]",
         "ARTISTNAME => artistname[_]"

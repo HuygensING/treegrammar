@@ -4,7 +4,7 @@ import java.util.List;
 
 public class GroupNode implements NonTerminalNode {
 
-  private List<Node> elements;
+  private final List<Node> elements;
 
   public GroupNode(List<Node> elements) {
     this.elements = elements;

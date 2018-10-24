@@ -42,17 +42,6 @@ public class Tree<T> {
     }
   }
 
-  private void connect(T parent, T child) {
-    children.putIfAbsent(parent, new ArrayList<>());
-    children.get(parent).add(child);
-    parents.put(child, parent);
-  }
-
-  private void disconnect(T parent, T child) {
-    children.get(parent).remove(child);
-    parents.remove(child, parent);
-  }
-
   public void mergeTreeIntoCurrentTree(T nodeToReplace, Tree<T> toMerge) {
     // Copy the children map from the tree container to merge, and connect the parent of the node to replace
     // with the root of the tree to merge
@@ -65,18 +54,36 @@ public class Tree<T> {
     disconnect(parent, nodeToReplace);
   }
 
+  public List<T> getRootChildren() {
+    return this.children.get(root);
+  }
+
   // NOTE: The toString method goes only one level deep
   @Override
   public String toString() {
     StringBuilder result = new StringBuilder();
-    result.append(root.toString())
+    String rootString = root == null
+        ? ""
+        : root.toString();
+    result.append(rootString)
         .append("[");
-    String children = this.children.get(root)
+    String children = getRootChildren()
         .stream()
         .map(Object::toString)
         .collect(joining(" "));
     result.append(children).append("]");
     return result.toString();
+  }
+
+  private void connect(T parent, T child) {
+    children.putIfAbsent(parent, new ArrayList<>());
+    children.get(parent).add(child);
+    parents.put(child, parent);
+  }
+
+  private void disconnect(T parent, T child) {
+    children.get(parent).remove(child);
+    parents.remove(child, parent);
   }
 
 }

@@ -1,15 +1,13 @@
 package nl.knaw.huc.di.tag.treegrammar;
 
-import nl.knaw.huc.di.tag.treegrammar.nodes.Node;
-import nl.knaw.huc.di.tag.treegrammar.nodes.NonTerminalMarkupNode;
-import nl.knaw.huc.di.tag.treegrammar.nodes.NonTerminalNode;
-import nl.knaw.huc.di.tag.treegrammar.nodes.TerminalNode;
+import nl.knaw.huc.di.tag.treegrammar.nodes.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+import static java.util.Collections.singleton;
 import static java.util.stream.Collectors.toList;
 
 // * author: Ronald Haentjens Dekker
@@ -37,7 +35,7 @@ class TransitionRule {
     if (righthandside.root instanceof NonTerminalNode) {
       return Optional.of(righthandside.root);
     }
-    return righthandside.children.get(righthandside.root)
+    return righthandside.getRootChildren()
         .stream()
         .filter(NonTerminalNode.class::isInstance)
         .findFirst();
@@ -47,7 +45,7 @@ class TransitionRule {
     if (righthandside.root instanceof TerminalNode) {
       return false;
     }
-    return righthandside.children.get(righthandside.root)
+    return righthandside.getRootChildren()
         .stream()
         .noneMatch(TerminalNode.class::isInstance);
   }
@@ -61,10 +59,19 @@ class TransitionRule {
     if (righthandside.root instanceof NonTerminalMarkupNode) {
       list.add(righthandside.root);
     }
-    list.addAll(righthandside.children.get(righthandside.root));
+    list.addAll(righthandside.getRootChildren());
     return list.stream()
+        .flatMap(this::handleChoiceNode)
         .filter(NonTerminalMarkupNode.class::isInstance)
-        .map(NonTerminalMarkupNode.class::cast);
+        .map(NonTerminalMarkupNode.class::cast)
+        ;
+  }
+
+  private Stream<Node> handleChoiceNode(final Node node) {
+    if (node instanceof ChoiceNode) {
+      return ((ChoiceNode) node).choices.stream();
+    }
+    return Stream.of(node);
   }
 
   @Override
@@ -77,7 +84,7 @@ class TransitionRule {
     if (righthandside.root instanceof NonTerminalMarkupNode) {
       list.add(righthandside.root);
     }
-    list.addAll(righthandside.children.get(righthandside.root));
+    list.addAll(righthandside.getRootChildren());
     return list.stream()
         .filter(NonTerminalNode.class::isInstance)
         .map(NonTerminalNode.class::cast)

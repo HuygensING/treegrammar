@@ -1,6 +1,8 @@
 package nl.knaw.huc.di.tag.treegrammar;
 
 import nl.knaw.huc.di.tag.treegrammar.nodes.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -10,9 +12,13 @@ import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.*;
 
 class TransitionRuleFactory {
+  private static final Logger LOG = LoggerFactory.getLogger(TransitionRuleFactory.class);
 
   private static final Pattern RULE_PATTERN = Pattern.compile("\\s*(\\S+)\\s*=>\\s*(.+)\\s*");
-  private static final Pattern RHS_PATTERN = Pattern.compile("([A-Za-z0-9]+)(\\[(.*?)\\])?");
+  private static final Pattern RHS_PATTERN = Pattern.compile("([A-Za-z][A-Za-z0-9_]+)?(\\[(.*?)\\])?");
+  static final Pattern CHOICE_PATTERN = Pattern.compile("\\(" +
+      "([A-Za-z0-9_\\|]+)" +
+      "\\)");
 
   static TransitionRule fromString(final String transitionRuleString) {
     Matcher ruleMatcher = RULE_PATTERN.matcher(transitionRuleString);
@@ -35,11 +41,15 @@ class TransitionRuleFactory {
 
     String rawRHS = ruleMatcher.group(2).trim();
     Matcher rhsMatcher = RHS_PATTERN.matcher(rawRHS);
-    if (!rhsMatcher.matches()) {
-      String was = rawRHS.isEmpty() ? "empty." : "'" + rawRHS + "'";
-      throw new TransitionRuleParseException("The right-hand side of the rule should have a root and zero or more children, but was " + was);
+    if (!rhsMatcher.matches() || rawRHS.isEmpty()) {
+      String rhs = rawRHS.isEmpty() ? "empty." : "'" + rawRHS + "'";
+      throw new TransitionRuleParseException("The right-hand side of the rule should have a root and/or one or more children, but was " + rhs);
     }
-    Node rhsRoot = toNode(rhsMatcher.group(1));
+    String rhsRootSerialization = rhsMatcher.group(1);
+    Node rhsRoot = null;
+    if (rhsRootSerialization != null) {
+      rhsRoot = toNode(rhsRootSerialization);
+    }
     final List<Node> rhsChildren = new ArrayList<>();
     String rawChildren = rhsMatcher.group(3);
     if (rawChildren != null) {
@@ -60,6 +70,7 @@ class TransitionRuleFactory {
 
   static Node toNode(final String rawNodeSerialization) {
     String nodeSerialization = rawNodeSerialization.trim();
+    LOG.info("nodeSerialization =<{}>", nodeSerialization);
     // TagNode
     if (nodeSerialization.substring(0, 1).matches("[a-z]")) {
       return new TagNode(nodeSerialization);
@@ -76,22 +87,65 @@ class TransitionRuleFactory {
     if (nodeSerialization.equals(StartNode.CIPHER)) {
       return new StartNode();
     }
+    // ChoiceNode
+    Matcher nsMatcher = CHOICE_PATTERN.matcher(nodeSerialization);
+    if (nsMatcher.matches()) {
+      String[] split = nsMatcher.group(1)
+          .split("\\|");
+      List<Node> choices = stream(split)
+          .map(TransitionRuleFactory::toNode)
+          .collect(toList());
+      return new ChoiceNode(choices);
+    }
+
     throw new RuntimeException("Unexpected node in transition rule: " + nodeSerialization);
   }
 
   public static void validateRuleSet(final List<TransitionRule> ruleSet) {
-    Set<String> lhsNonTerminals = ruleSet.stream()
+    detectNonTerminalsWithMultipleRules(ruleSet);
+
+    List<String> lhsNonTerminals = ruleSet.stream()
         .map(TransitionRule::lefthandsideNode)
         .map(Object::toString)
-        .collect(toSet());
+        .collect(toList());
 
+    String startNode = detectStartNodeTransitionRule(lhsNonTerminals);
+
+    detectNontermination(ruleSet, lhsNonTerminals);
+
+    detectCycle(ruleSet, startNode);
+
+  }
+
+  private static void detectNonTerminalsWithMultipleRules(final List<TransitionRule> ruleSet) {
+    final List<String> nonTerminalsWithMultipleRules = new ArrayList<>();
+    final Set<String> nonTerminalsWithRule = new HashSet<>();
+
+    ruleSet.forEach(r -> {
+      String lhs = r.lefthandside.toString();
+      if (nonTerminalsWithRule.contains(lhs)) {
+        nonTerminalsWithMultipleRules.add(lhs);
+      } else {
+        nonTerminalsWithRule.add(lhs);
+      }
+    });
+    if (!nonTerminalsWithMultipleRules.isEmpty()) {
+      throw new TransitionRuleSetValidationException(
+          "Multiple rules found for " + nonTerminalsWithMultipleRules + ": only 1 rule allowed per nonterminal; use choice rule: (A|B)");
+    }
+  }
+
+  private static String detectStartNodeTransitionRule(final List<String> lhsNonTerminals) {
     String startNode = new StartNode().toString();
     boolean startNodeTransitionRuleIsPresent = lhsNonTerminals.contains(startNode);
     if (!startNodeTransitionRuleIsPresent) {
       throw new TransitionRuleSetValidationException(
           "No start node transition rule (" + StartNode.CIPHER + " => ...) found!");
     }
+    return startNode;
+  }
 
+  private static void detectNontermination(final List<TransitionRule> ruleSet, final List<String> lhsNonTerminals) {
     Set<String> rhsNonTerminals = ruleSet.stream()
         .flatMap(TransitionRule::righthandsideNonTerminalMarkupNodes)
         .map(Object::toString)
@@ -105,9 +159,6 @@ class TransitionRuleFactory {
           "No terminating transition rules found for "
               + String.join(",", nonTerminalsWithoutTransitionRules));
     }
-
-    detectCycle(ruleSet, startNode);
-
   }
 
   private static void detectCycle(final List<TransitionRule> ruleSet, final String startNode) {
@@ -161,22 +212,6 @@ class TransitionRuleFactory {
     while (!toVisit.isEmpty()) {
       String next = toVisit.remove(0);
       Set<String> newNodes = nonTerminalConnections.get(next);
-      Set<String> revisits = newNodes.stream().filter(visited::contains).collect(toSet());
-//      if (!revisits.isEmpty()) {
-//        String offendingRules = ruleSet.stream()
-//            .filter(r -> r.lefthandside.toString().equals(next))
-//            .filter(r -> r.righthandsideNonTerminalMarkupNodes()
-//                .map(Object::toString)
-//                .anyMatch(revisits::contains))
-//            .map(Object::toString)
-//            .collect(joining("\n"));
-//        String head = revisits.size() == 1
-//            ? "This transition rule introduces a cycle"
-//            : "These transition rules introduce cycles";
-//        String message = head + ":\n" + offendingRules;
-//        throw new TransitionRuleSetValidationException(message);
-//      }
-
       visited.add(next);
       toVisit.removeAll(visited);
       toVisit.addAll(newNodes);
@@ -203,11 +238,12 @@ class TransitionRuleFactory {
 
   }
 
-  public static boolean isTerminating(TransitionRule transitionRule) {
+  private static boolean isTerminating(TransitionRule transitionRule) {
+    List<Node> rootChildren = transitionRule.righthandside.getRootChildren();
     return transitionRule.righthandside.root instanceof TagNode
-        && (transitionRule.righthandside.children.get(transitionRule.righthandside.root).isEmpty()
-        || (transitionRule.righthandside.children.get(transitionRule.righthandside.root).size() == 1
-        && transitionRule.righthandside.children.get(transitionRule.righthandside.root).get(0) instanceof AnyTextNode
+        && (rootChildren.isEmpty()
+        || (rootChildren.size() == 1
+        && rootChildren.get(0) instanceof AnyTextNode
     ));
   }
 

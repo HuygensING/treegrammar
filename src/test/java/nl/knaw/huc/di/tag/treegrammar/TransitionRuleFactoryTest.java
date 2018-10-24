@@ -2,15 +2,49 @@ package nl.knaw.huc.di.tag.treegrammar;
 
 import nl.knaw.huc.di.tag.treegrammar.nodes.*;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.regex.Matcher;
 
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
+import static nl.knaw.huc.di.tag.treegrammar.TransitionRuleFactory.CHOICE_PATTERN;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
-public class TransitionRuleFactoryTest {
+class TransitionRuleFactoryTest {
+  Logger LOG = LoggerFactory.getLogger(TransitionRuleFactoryTest.class);
+
+  @Test
+  void testChoicePattern() {
+    String nodeSerialization = "(A|B)";
+    Matcher m = CHOICE_PATTERN.matcher(nodeSerialization);
+    assertThat(m.matches()).isTrue();
+    assertThat(m.group(1)).isEqualTo("A|B");
+  }
+
+  @Test
+  void testChoicePattern2() {
+    String nodeSerialization = "(A|B|C)";
+    Matcher m = CHOICE_PATTERN.matcher(nodeSerialization);
+    assertThat(m.matches()).isTrue();
+    assertThat(m.group(1)).isEqualTo("A|B|C");
+  }
+
+  @Test
+  void testChoiceNodeSerialization() {
+    Node node = TransitionRuleFactory.toNode("(CHOICE|OPTION)");
+    assertThat(node).isInstanceOf(ChoiceNode.class);
+    ChoiceNode choiceNode = (ChoiceNode) node;
+    List<Node> choices = choiceNode.choices;
+    assertThat(choices).hasSize(2);
+    final Node choiceChoice = choices.get(0);
+    final Node optionChoice = choices.get(1);
+    assertThat(choiceChoice).isEqualTo(new NonTerminalMarkupNode("CHOICE"));
+    assertThat(optionChoice).isEqualTo(new NonTerminalMarkupNode("OPTION"));
+  }
 
   @Test
   void testTagNodeSerialization() {
@@ -56,7 +90,7 @@ public class TransitionRuleFactoryTest {
     String expectedRHSRoot = new TagNode("root").toString();
     assertThat(actualRHSRoot).isEqualTo(expectedRHSRoot);
 
-    List<Node> rhsChildren = tr.righthandside.children.get(tr.righthandside.root);
+    List<Node> rhsChildren = tr.righthandside.getRootChildren();
     assertThat(rhsChildren).hasSize(1);
     Node expectedRHSChild = new NonTerminalMarkupNode("MARKUP");
     assertThat(rhsChildren.get(0).toString()).isEqualTo(expectedRHSChild.toString());
@@ -75,7 +109,7 @@ public class TransitionRuleFactoryTest {
     String expectedRHSRoot = new TagNode("markup").toString();
     assertThat(actualRHSRoot).isEqualTo(expectedRHSRoot);
 
-    List<Node> rhsChildren = tr.righthandside.children.get(tr.righthandside.root);
+    List<Node> rhsChildren = tr.righthandside.getRootChildren();
     assertThat(rhsChildren).hasSize(1);
     Node expectedRHSChild = new AnyTextNode();
     String actual = rhsChildren.get(0).toString();
@@ -93,7 +127,7 @@ public class TransitionRuleFactoryTest {
   @Test
   void testTransitionRuleDoesNotParse2() {
     String input = "M => ";
-    String expectedExceptionMessage = "The right-hand side of the rule should have a root and zero or more children, but was empty.";
+    String expectedExceptionMessage = "The right-hand side of the rule should have a root and/or one or more children, but was empty.";
     assertParsingFailsWithExceptionMessage(input, expectedExceptionMessage);
   }
 
@@ -149,6 +183,18 @@ public class TransitionRuleFactoryTest {
         "FIRST => first[_]" // {LAST} does not terminate
     };
     final String expectedExceptionMessage = "No terminating transition rules found for LAST";
+    assertValidationFailsWithExceptionMessage(rules, expectedExceptionMessage);
+  }
+
+  @Test
+  void onlyOneTransitionRulePerNonTerminal() {
+    String[] rules = {
+        "# => name[FIRST LAST]",
+        "FIRST => first[_]",
+        "FIRST => initial[_]",
+        "LAST => last[_]"
+    };
+    final String expectedExceptionMessage = "Multiple rules found for [FIRST]: only 1 rule allowed per nonterminal; use choice rule: (A|B)";
     assertValidationFailsWithExceptionMessage(rules, expectedExceptionMessage);
   }
 
