@@ -25,6 +25,8 @@ public class ChoiceNode implements NonTerminalNode {
 
   @Override
   public String toString() {
-    return "(" + choices.stream().map(Object::toString).collect(joining("|")) + ")";
+    return choices.stream()
+        .map(Object::toString)
+        .collect(joining("|", "(", ")"));
   }
 }
