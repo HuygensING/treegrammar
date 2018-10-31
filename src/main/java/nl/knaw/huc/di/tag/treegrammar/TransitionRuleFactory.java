@@ -17,8 +17,11 @@ class TransitionRuleFactory {
   private static final Pattern RULE_PATTERN = Pattern.compile("\\s*(\\S+)\\s*=>\\s*(.+)\\s*");
   private static final Pattern RHS_PATTERN = Pattern.compile("([A-Za-z][A-Za-z0-9_]+)?(\\[(.*?)\\])?");
   static final Pattern CHOICE_PATTERN = Pattern.compile("\\(" +
-      "([A-Za-z0-9_\\|]+)" +
+      "([A-Za-z][A-Za-z0-9_ \\{\\}\\|]+)" +
       "\\)");
+  static final Pattern GROUP_PATTERN = Pattern.compile("\\{" +
+      "([A-Za-z][A-Za-z0-9_ ]+)" +
+      "\\}");
 
   static TransitionRule fromString(final String transitionRuleString) {
     Matcher ruleMatcher = RULE_PATTERN.matcher(transitionRuleString);
@@ -40,11 +43,13 @@ class TransitionRuleFactory {
     }
 
     String rawRHS = ruleMatcher.group(2).trim();
+    final Tree<Node> rhs = parseRHS(rawRHS);
+    return new TransitionRule(lhs, rhs);
+  }
+
+  private static Tree<Node> parseRHS(final String rawRHS) {
     Matcher rhsMatcher = RHS_PATTERN.matcher(rawRHS);
-    if (!rhsMatcher.matches() || rawRHS.isEmpty()) {
-      String rhs = rawRHS.isEmpty() ? "empty." : "'" + rawRHS + "'";
-      throw new TransitionRuleParseException("The right-hand side of the rule should have a root and/or one or more children, but was " + rhs);
-    }
+    verifyRHS(rawRHS, rhsMatcher);
     String rhsRootSerialization = rhsMatcher.group(1);
     Node rhsRoot = null;
     if (rhsRootSerialization != null) {
@@ -53,19 +58,38 @@ class TransitionRuleFactory {
     final List<Node> rhsChildren = new ArrayList<>();
     String rawChildren = rhsMatcher.group(3);
     if (rawChildren != null) {
-      String[] splitChildren = rawChildren.split("\\s+");
-      stream(splitChildren)
-          .map(TransitionRuleFactory::toNode)
-          .forEach(rhsChildren::add);
+      Matcher nsMatcher = CHOICE_PATTERN.matcher(rawChildren);
+      if (nsMatcher.matches()) {
+        String[] split = nsMatcher.group(1)
+            .split("\\|");
+        List<Node> choices = stream(split)
+            .map(TransitionRuleFactory::toNode)
+            .collect(toList());
+        final Node orNode = new ChoiceNode(choices);
+        Tree<Node> choiceTree = new Tree(orNode, choices);
+//        rhsChildren.add(choiceTree);
 
+//        return new ChoiceNode(choices);
+      } else {
+        String[] splitChildren = rawChildren.split("\\s+");
+        stream(splitChildren)
+            .map(TransitionRuleFactory::toNode)
+            .forEach(rhsChildren::add);
+      }
     } else {
       rhsRoot = toNode(rawRHS);
     }
     if (rhsRoot instanceof NonTerminalMarkupNode) {
       throw new TransitionRuleParseException("The right-hand side of the rule should have a root that is not a  non-terminal");
     }
-    final Tree<Node> rhs = new Tree<>(rhsRoot, rhsChildren);
-    return new TransitionRule(lhs, rhs);
+    return new Tree<>(rhsRoot, rhsChildren);
+  }
+
+  private static void verifyRHS(final String rawRHS, final Matcher rhsMatcher) {
+    if (!rhsMatcher.matches() || rawRHS.isEmpty()) {
+      String rhs = rawRHS.isEmpty() ? "empty." : "'" + rawRHS + "'";
+      throw new TransitionRuleParseException("The right-hand side of the rule should have a root and/or one or more children, but was " + rhs);
+    }
   }
 
   static Node toNode(final String rawNodeSerialization) {
@@ -110,11 +134,8 @@ class TransitionRuleFactory {
         .collect(toList());
 
     String startNode = detectStartNodeTransitionRule(lhsNonTerminals);
-
     detectNontermination(ruleSet, lhsNonTerminals);
-
     detectCycle(ruleSet, startNode);
-
   }
 
   private static void detectNonTerminalsWithMultipleRules(final List<TransitionRule> ruleSet) {
