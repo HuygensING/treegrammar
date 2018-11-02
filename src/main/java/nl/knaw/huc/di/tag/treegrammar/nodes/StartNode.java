@@ -1,5 +1,7 @@
 package nl.knaw.huc.di.tag.treegrammar.nodes;
 
+import java.util.stream.Stream;
+
 public class StartNode implements NonTerminalNode {
   public static final String CIPHER = "#";
 
@@ -7,13 +9,13 @@ public class StartNode implements NonTerminalNode {
   }
 
   @Override
-  public String toString() {
-    return CIPHER;
+  public boolean matches(Node node) {
+    return node instanceof StartNode;
   }
 
   @Override
-  public boolean matches(Node node) {
-    return node instanceof StartNode;
+  public Stream<NonTerminalNode> nonTerminalNodeStream() {
+    return Stream.of(this);
   }
 
   @Override
@@ -29,5 +31,10 @@ public class StartNode implements NonTerminalNode {
   @Override
   public boolean equals(final Object obj) {
     return obj instanceof StartNode;
+  }
+
+  @Override
+  public String toString() {
+    return CIPHER;
   }
 }

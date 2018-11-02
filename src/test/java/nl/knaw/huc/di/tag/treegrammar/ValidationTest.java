@@ -58,8 +58,8 @@ class ValidationTest {
 
   private List<TransitionRule> defaultTransitionRules() {
     final List<TransitionRule> defaultTransitionRules = new ArrayList<>();
-    defaultTransitionRules.add(TransitionRuleFactory.fromString("# => root[MARKUP]"));
-    defaultTransitionRules.add(TransitionRuleFactory.fromString("MARKUP => markup[_]"));
+    defaultTransitionRules.add(parseTransitionRule("# => root[MARKUP]"));
+    defaultTransitionRules.add(parseTransitionRule("MARKUP => markup[_]"));
     return defaultTransitionRules;
   }
 
@@ -72,7 +72,7 @@ class ValidationTest {
         "LAST => last[_]"
     };
     final List<TransitionRule> transitionRules = stream(ruleStrings)
-        .map(TransitionRuleFactory::fromString)
+        .map(this::parseTransitionRule)
         .collect(toList());
     XMLValidatorUsingTreeGrammars validator = new XMLValidatorUsingTreeGrammars(transitionRules);
     validator.parse("<person>" +
@@ -140,8 +140,12 @@ class ValidationTest {
   private void assertTreeVisualisation(final XMLValidatorUsingTreeGrammars validator, final String expected) {
     Tree<Node> tree = validator.getTree();
     String asText = TreeVisualizer.asText(tree);
-    LOG.info(asText);
+    LOG.info("\n{}", asText);
     assertThat(asText).isEqualTo(expected);
+  }
+
+  private TransitionRule parseTransitionRule(final String input) {
+    return new TransitionRuleSetFactory().fromTGS(input).get(0);
   }
 
 }

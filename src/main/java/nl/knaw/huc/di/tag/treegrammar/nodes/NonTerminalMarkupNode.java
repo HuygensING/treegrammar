@@ -1,9 +1,8 @@
 package nl.knaw.huc.di.tag.treegrammar.nodes;
 
-import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public class NonTerminalMarkupNode implements NonTerminalNode {
-  public static final Pattern PATTERN = Pattern.compile("([A-Z][a-zA-Z_]*)");
   private final String variableName;
 
   public NonTerminalMarkupNode(String variableName) {
@@ -14,6 +13,11 @@ public class NonTerminalMarkupNode implements NonTerminalNode {
   public boolean matches(Node node) {
     return (node instanceof NonTerminalMarkupNode && ((NonTerminalMarkupNode) node).variableName.equals(variableName))
         || (node instanceof TagNode);
+  }
+
+  @Override
+  public Stream<NonTerminalNode> nonTerminalNodeStream() {
+    return Stream.of(this);
   }
 
   @Override

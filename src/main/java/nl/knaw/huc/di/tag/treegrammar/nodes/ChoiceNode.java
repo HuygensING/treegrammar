@@ -2,6 +2,7 @@ package nl.knaw.huc.di.tag.treegrammar.nodes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
 
@@ -19,6 +20,11 @@ public class ChoiceNode implements NonTerminalNode {
   }
 
   @Override
+  public Stream<NonTerminalNode> nonTerminalNodeStream() {
+    return choices.stream().flatMap(Node::nonTerminalNodeStream);
+  }
+
+  @Override
   public Node copy() {
     return this;
   } // TODO: copy choices?
@@ -29,4 +35,5 @@ public class ChoiceNode implements NonTerminalNode {
         .map(Object::toString)
         .collect(joining("|", "(", ")"));
   }
+
 }

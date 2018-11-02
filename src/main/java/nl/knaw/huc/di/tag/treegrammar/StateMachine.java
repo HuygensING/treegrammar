@@ -7,7 +7,6 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 import static java.text.MessageFormat.format;
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
@@ -17,7 +16,7 @@ import static java.util.stream.Collectors.toList;
  *
  * in een tree automata willen we een tree bijhouden
  * In een state machine ga je van state naar state
- * Echter in een tree model zijn er meerdere mogelijke non terminls
+ * Echter in een tree model zijn er meerdere mogelijke non terminals
  * die je kunt vervangen.
  */
 class StateMachine {
@@ -44,9 +43,7 @@ class StateMachine {
 
   public void addTransitionRule(TransitionRule transitionRule) {
     this.rules.add(transitionRule);
-
-    final NonTerminalNode lhs = transitionRule.lefthandside;
-    nodeReplacementMap.put(lhs, transitionRule.righthandside);
+    nodeReplacementMap.put(transitionRule.lefthandside, transitionRule.righthandside);
   }
 
   // bij de state machine komen nodes binnen
@@ -79,18 +76,8 @@ class StateMachine {
       return;
     }
 
-    final List<Node> nonTerminalNodes;
-    if (nonTerminalNode instanceof ChoiceNode) {
-      nonTerminalNodes = ((ChoiceNode) nonTerminalNode).choices.stream()
-          .filter(t -> t.matches(node))
-          .collect(toList());
-
-    } else {
-      nonTerminalNodes = singletonList(nonTerminalNode);
-    }
-
-//    LOG.info("applicableRules={}", applicableRules);
-    if (nonTerminalNodes.stream().noneMatch(nodeReplacementMap::containsKey)) {
+    //    LOG.info("applicableRules={}", applicableRules);
+    if (nonTerminalNode.nonTerminalNodeStream().noneMatch(nodeReplacementMap::containsKey)) {
       throw new RuntimeException(format("No transition rule found! Current state: {0}, expected: {1}", node, nonTerminalNode));
     }
 //    TransitionRule theRule = applicableRules.get(0); // NOT correct
@@ -107,7 +94,7 @@ class StateMachine {
 
     //    Tree<Node> potentialReplacement = nodeReplacementMap.get(nonTerminalNode);
     // check whether tag of right hand side is the same as the incoming tag.
-    Tree<Node> replacementTree = nonTerminalNodes.stream()
+    Tree<Node> replacementTree = nonTerminalNode.nonTerminalNodeStream()
         .map(nodeReplacementMap::get)
         .filter(t -> t.root == null
             ? t.getRootChildren().get(0).matches(node)
@@ -115,7 +102,7 @@ class StateMachine {
         )
         .findFirst()
         .orElseThrow(() -> {
-          final String expectation = nonTerminalNodes.stream()
+          final String expectation = nonTerminalNode.nonTerminalNodeStream()
               .map(nodeReplacementMap::get)
               .map(t -> t.root)
               .filter(Objects::nonNull)

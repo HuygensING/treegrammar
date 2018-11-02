@@ -12,12 +12,9 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.*;
 
 public class TransitionRuleSetFactory {
 
@@ -31,10 +28,11 @@ public class TransitionRuleSetFactory {
     TGSParser tgsParser = new TGSParser(tokens);
     tgsParser.addErrorListener(errorListener);
 
-    return tgsParser.script()
+    List<TransitionRule> transitionRules = tgsParser.script()
         .transitionrule().stream()
         .map(this::toTransitionRule)
         .collect(toList());
+    return transitionRules;
   }
 
   private TransitionRule toTransitionRule(final TransitionruleContext transitionruleContext) {
@@ -132,4 +130,147 @@ public class TransitionRuleSetFactory {
 
     return node;
   }
+
+  public static void validateRuleSet(final List<TransitionRule> ruleSet) {
+    detectNonTerminalsWithMultipleRules(ruleSet);
+
+    List<String> lhsNonTerminals = ruleSet.stream()
+        .map(TransitionRule::lefthandsideNode)
+        .map(Object::toString)
+        .collect(toList());
+
+    String startNode = detectStartNodeTransitionRule(lhsNonTerminals);
+    detectNontermination(ruleSet, lhsNonTerminals);
+    detectCycle(ruleSet, startNode);
+  }
+
+  private static void detectNonTerminalsWithMultipleRules(final List<TransitionRule> ruleSet) {
+    final List<String> nonTerminalsWithMultipleRules = new ArrayList<>();
+    final Set<String> nonTerminalsWithRule = new HashSet<>();
+
+    ruleSet.forEach(r -> {
+      String lhs = r.lefthandside.toString();
+      if (nonTerminalsWithRule.contains(lhs)) {
+        nonTerminalsWithMultipleRules.add(lhs);
+      } else {
+        nonTerminalsWithRule.add(lhs);
+      }
+    });
+    if (!nonTerminalsWithMultipleRules.isEmpty()) {
+      throw new TransitionRuleSetValidationException(
+          "Multiple rules found for " + nonTerminalsWithMultipleRules + ": only 1 rule allowed per nonterminal; use choice rule: (A|B)");
+    }
+  }
+
+  private static String detectStartNodeTransitionRule(final List<String> lhsNonTerminals) {
+    String startNode = new StartNode().toString();
+    boolean startNodeTransitionRuleIsPresent = lhsNonTerminals.contains(startNode);
+    if (!startNodeTransitionRuleIsPresent) {
+      throw new TransitionRuleSetValidationException(
+          "No start node transition rule (" + StartNode.CIPHER + " => ...) found!");
+    }
+    return startNode;
+  }
+
+  private static void detectNontermination(final List<TransitionRule> ruleSet, final List<String> lhsNonTerminals) {
+    Set<String> rhsNonTerminals = ruleSet.stream()
+        .flatMap(TransitionRule::righthandsideNonTerminalMarkupNodes)
+        .map(Object::toString)
+        .collect(toSet());
+
+    Set<String> nonTerminalsWithoutTransitionRules = rhsNonTerminals.stream()
+        .filter(n -> !lhsNonTerminals.contains(n))
+        .collect(toSet());
+    if (!nonTerminalsWithoutTransitionRules.isEmpty()) {
+      throw new TransitionRuleSetValidationException(
+          "No terminating transition rules found for "
+              + String.join(",", nonTerminalsWithoutTransitionRules));
+    }
+  }
+
+  private static void detectCycle(final List<TransitionRule> ruleSet, final String startNode) {
+    // calculate which nonterminals are connected through the transition rules
+    Map<String, Set<String>> nonTerminalConnections = new HashMap<>();
+    ruleSet.forEach(r -> {
+      String key = r.lefthandside.toString();
+      nonTerminalConnections.putIfAbsent(key, new HashSet<>());
+      Set<String> values = nonTerminalConnections.get(key);
+      r.righthandsideNonTerminalMarkupNodes()
+          .map(Object::toString)
+          .forEach(values::add);
+    });
+
+    // if there is a cycle, that means there are rules that don't terminate
+    // so first find the lhs non-terminals of the terminating rules
+    // terminating rules have a tagnode as root and either no children, or just 1 AnyText node
+    List<String> nonTerminalsWithTerminatingRule = ruleSet.stream()
+        .filter(TransitionRuleSetFactory::isTerminating)
+        .map(r -> r.lefthandside)
+        .map(Object::toString)
+        .collect(toList());
+
+    Set<String> nonTerminalsWithRules = new HashSet<>(nonTerminalConnections.keySet());
+    nonTerminalsWithRules.removeAll(nonTerminalsWithTerminatingRule);
+    boolean goOn = true;
+    while (goOn) {
+      List<String> indirectlyTerminated = nonTerminalsWithRules.stream()
+          .filter(n -> nonTerminalsWithTerminatingRule.containsAll(nonTerminalConnections.get(n)))
+          .collect(toList());
+      nonTerminalsWithRules.removeAll(indirectlyTerminated);
+      nonTerminalsWithTerminatingRule.addAll(indirectlyTerminated);
+      goOn = !indirectlyTerminated.isEmpty();
+    }
+    if (!nonTerminalsWithRules.isEmpty()) {
+      String offendingRules = ruleSet.stream()
+          .filter(r -> nonTerminalsWithRules.contains(r.lefthandside.toString()))
+          .map(Object::toString)
+          .collect(joining("\n"));
+      String head = nonTerminalsWithRules.size() == 1
+          ? "This transition rule introduces a cycle"
+          : "These transition rules introduce (a) cycle(s)";
+      String message = head + ":\n" + offendingRules;
+      throw new TransitionRuleSetValidationException(message);
+//      throw new TransitionRuleSetValidationException("cycle found!" + nonTerminalsWithRules);
+    }
+
+    List<String> toVisit = new ArrayList<>();
+    Set<String> visited = new HashSet<>();
+    toVisit.add(startNode);
+    while (!toVisit.isEmpty()) {
+      String next = toVisit.remove(0);
+      Set<String> newNodes = nonTerminalConnections.get(next);
+      visited.add(next);
+      toVisit.removeAll(visited);
+      toVisit.addAll(newNodes);
+    }
+
+    // all rules should have been visited.
+    // for now, we don't keep track of which rules have been visited, just which nonterminals
+    // but each nonterminal appears as lhs in at least 1 transition rule
+    // and since we connected the nonterminals with all the nonterminals from all the rhs of all relevant transition rules, it's as if we followed all branches.
+    // so transition rules with unvisited nonterminals as their lhs are transition rules that are unreachable from the start node
+    Set<String> unvisitedNonTerminals = new HashSet(nonTerminalConnections.keySet());
+    unvisitedNonTerminals.removeAll(visited);
+    if (!unvisitedNonTerminals.isEmpty()) {
+      List<String> unreachedRules = ruleSet.stream()
+          .filter(r -> unvisitedNonTerminals.contains(r.lefthandside.toString()))
+          .map(Object::toString)
+          .collect(toList());
+      String head = unreachedRules.size() == 1
+          ? "This transition rule is"
+          : "These transition rules are";
+      String message = head + " unreachable from the start node.:\n" + String.join("\n", unreachedRules);
+      throw new TransitionRuleSetValidationException(message);
+    }
+  }
+
+  private static boolean isTerminating(TransitionRule transitionRule) {
+    List<Node> rootChildren = transitionRule.righthandside.getRootChildren();
+    return transitionRule.righthandside.root instanceof TagNode
+        && (rootChildren.isEmpty()
+        || (rootChildren.size() == 1
+        && rootChildren.get(0) instanceof AnyTextNode
+    ));
+  }
+
 }

@@ -1,6 +1,9 @@
 package nl.knaw.huc.di.tag.treegrammar;
 
-import nl.knaw.huc.di.tag.treegrammar.nodes.*;
+import nl.knaw.huc.di.tag.treegrammar.nodes.Node;
+import nl.knaw.huc.di.tag.treegrammar.nodes.NonTerminalMarkupNode;
+import nl.knaw.huc.di.tag.treegrammar.nodes.NonTerminalNode;
+import nl.knaw.huc.di.tag.treegrammar.nodes.TerminalNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,17 +63,9 @@ public class TransitionRule {
     }
     list.addAll(righthandside.getRootChildren());
     return list.stream()
-        .flatMap(this::handleChoiceNode)
+        .flatMap(Node::nonTerminalNodeStream)
         .filter(NonTerminalMarkupNode.class::isInstance)
-        .map(NonTerminalMarkupNode.class::cast)
-        ;
-  }
-
-  private Stream<Node> handleChoiceNode(final Node node) {
-    if (node instanceof ChoiceNode) {
-      return ((ChoiceNode) node).choices.stream();
-    }
-    return Stream.of(node);
+        .map(NonTerminalMarkupNode.class::cast);
   }
 
   @Override

@@ -22,7 +22,7 @@ class XMLValidatorUsingTreeGrammars {
   private final StateMachine stateMachine = new StateMachine();
 
   XMLValidatorUsingTreeGrammars(List<TransitionRule> transitionRules) {
-    TransitionRuleFactory.validateRuleSet(transitionRules);
+    TransitionRuleSetFactory.validateRuleSet(transitionRules);
     transitionRules.forEach(stateMachine::addTransitionRule);
   }
 
