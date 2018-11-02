@@ -8,7 +8,7 @@ import static java.util.stream.Collectors.joining;
 
 public class ChoiceNode implements NonTerminalNode {
 
-  public final List<Node> choices = new ArrayList<>();
+  private final List<Node> choices = new ArrayList<>();
 
   public ChoiceNode(final List<Node> choices) {
     this.choices.addAll(choices);

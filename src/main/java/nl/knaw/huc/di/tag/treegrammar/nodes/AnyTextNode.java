@@ -4,7 +4,7 @@ import java.util.stream.Stream;
 
 public class AnyTextNode implements NonTerminalNode {
 
-  public static final String CIPHER = "_";
+  private static final String CIPHER = "_";
 
   public AnyTextNode() {
   }

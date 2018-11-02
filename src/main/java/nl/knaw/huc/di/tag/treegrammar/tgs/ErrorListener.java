@@ -18,9 +18,9 @@ import static java.lang.String.format;
 public class ErrorListener implements ANTLRErrorListener {
   private static final Logger LOG = LoggerFactory.getLogger(ErrorListener.class);
   private final List<String> errors = new ArrayList<>();
-  private boolean reportAmbiguity = false;
-  private boolean reportAttemptingFullContext = false;
-  private boolean reportContextSensitivity = true;
+  private final boolean reportAmbiguity = false;
+  private final boolean reportAttemptingFullContext = false;
+  private final boolean reportContextSensitivity = true;
 
   @Override
   public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {

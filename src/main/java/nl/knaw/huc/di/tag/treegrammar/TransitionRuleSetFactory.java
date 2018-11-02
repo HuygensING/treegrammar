@@ -28,11 +28,10 @@ public class TransitionRuleSetFactory {
     TGSParser tgsParser = new TGSParser(tokens);
     tgsParser.addErrorListener(errorListener);
 
-    List<TransitionRule> transitionRules = tgsParser.script()
+    return tgsParser.script()
         .transitionrule().stream()
         .map(this::toTransitionRule)
         .collect(toList());
-    return transitionRules;
   }
 
   private TransitionRule toTransitionRule(final TransitionruleContext transitionruleContext) {
@@ -55,7 +54,7 @@ public class TransitionRuleSetFactory {
         handleChildContext(c, children, subTrees)
     );
     final Tree<Node> rhsTree = new Tree<>(root, children);
-    subTrees.forEach((k, v) -> rhsTree.children.put(k, v));
+    subTrees.forEach(rhsTree.children::put);
 
     return rhsTree;
   }
@@ -123,12 +122,10 @@ public class TransitionRuleSetFactory {
 
   private Node toNode(final RootContext root) {
     TerminalMarkupContext terminalMarkupContext = root.terminalMarkup();
-    Node node = (terminalMarkupContext != null)
+
+    return (terminalMarkupContext != null)
         ? new TagNode(terminalMarkupContext.TERMINAL().getText())
         : new NonTerminalMarkupNode(root.nonTerminalMarkup().NONTERMINAL().getText());
-    ;
-
-    return node;
   }
 
   public static void validateRuleSet(final List<TransitionRule> ruleSet) {

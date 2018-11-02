@@ -17,7 +17,7 @@ import static java.util.stream.Collectors.toList;
 //\
 // Een rule heeft een lefthandside (dat is een non terminal markup node
 // Een right hand side: that is een tree.
-public class TransitionRule {
+class TransitionRule {
   final NonTerminalNode lefthandside;
   final Tree<Node> righthandside;
 

@@ -6,7 +6,6 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,8 +107,8 @@ public class TGSTest {
     parser.setBuildParseTree(true);
     assertThat(parser.getNumberOfSyntaxErrors()).isEqualTo(0);
 
-    ParseTree script = parser.script();
+    ScriptContext script = parser.script();
     LOG.info("script={}", script.toStringTree(parser));
-    return (ScriptContext) script;
+    return script;
   }
 }

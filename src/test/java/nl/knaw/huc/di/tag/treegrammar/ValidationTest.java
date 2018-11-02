@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -104,7 +103,7 @@ class ValidationTest {
 //        .map(TransitionRuleFactory::fromString)
 //        .collect(toList());
 
-    String tgsScript = stream(ruleStrings).collect(joining("\n"));
+    String tgsScript = String.join("\n", ruleStrings);
     List<TransitionRule> transitionRules = new TransitionRuleSetFactory().fromTGS(tgsScript);
 
     LOG.info("transitionrules={}", transitionRules);

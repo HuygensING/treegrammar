@@ -11,8 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-import static java.util.Arrays.stream;
-import static java.util.stream.Collectors.joining;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -190,7 +188,7 @@ class TransitionRuleSetFactoryTest {
   }
 
   private List<TransitionRule> processRuleStrings(final String[] rules) {
-    String script = stream(rules).collect(joining("\n"));
+    String script = String.join("\n", rules);
     return new TransitionRuleSetFactory().fromTGS(script);
   }
 
