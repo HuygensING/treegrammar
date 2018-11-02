@@ -1,6 +1,10 @@
 package nl.knaw.huc.di.tag.treegrammar.nodes;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Stream;
+
+import static java.util.Collections.emptyList;
 
 /**
  * Created by ronalddekker on 28/09/18.
@@ -21,6 +25,11 @@ public class TextNode implements TerminalNode {
   @Override
   public Stream<NonTerminalNode> nonTerminalNodeStream() {
     return Stream.empty();
+  }
+
+  @Override
+  public List<Node> firstNonTerminals() {
+    return emptyList();
   }
 
   @Override

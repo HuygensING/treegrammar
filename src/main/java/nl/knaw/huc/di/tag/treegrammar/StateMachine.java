@@ -1,12 +1,16 @@
 package nl.knaw.huc.di.tag.treegrammar;
 
-import nl.knaw.huc.di.tag.treegrammar.nodes.*;
+import nl.knaw.huc.di.tag.treegrammar.nodes.AnyTextNode;
+import nl.knaw.huc.di.tag.treegrammar.nodes.Node;
+import nl.knaw.huc.di.tag.treegrammar.nodes.NonTerminalNode;
+import nl.knaw.huc.di.tag.treegrammar.nodes.StartNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 import static java.text.MessageFormat.format;
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
@@ -26,7 +30,7 @@ class StateMachine {
   private final Map<NonTerminalNode, Tree<Node>> nodeReplacementMap = new HashMap<>();
   private final Deque<List<NonTerminalNode>> nonTerminalsStack = new ArrayDeque<>();
 
-  public StateMachine() {
+  StateMachine() {
     init();
   }
 
@@ -56,6 +60,9 @@ class StateMachine {
   public void processInput(Node node) {
     // We zoeken eerst op naar welke node de huidige pointer verwijst.
     // Dan kijken we welke transitierules er zijn voor dat type node.
+
+    LOG.info("nextNonTerminals={}", nextNonTerminals());
+
     List<NonTerminalNode> nonTerminalsToProcess = nonTerminalsStack.peek();
     if (nonTerminalsToProcess.isEmpty()) {
       throw new RuntimeException("Unexpected node " + node);
@@ -136,6 +143,34 @@ class StateMachine {
     // het zou beter zijn om dit te indexeren; maar ok..
   }
 
+  public Tree<Node> getTree() {
+    return completeTree;
+  }
+
+  public List<Node> nextNonTerminals() {
+    final List<Node> list = new ArrayList<>();
+    Node root = completeTree.root;
+    if (root instanceof NonTerminalNode) {
+      list.add(root);
+    } else {
+      List<Node> firstNonTerminals = completeTree.getRootChildren().stream()
+          .map(Node::firstNonTerminals)
+          .filter(l -> !l.isEmpty())
+          .findFirst()
+          .orElse(emptyList());
+      list.addAll(firstNonTerminals);
+    }
+    return list;
+  }
+
+  void pop() {
+    nonTerminalsStack.pop();
+  }
+
+  void reset() {
+    init();
+  }
+
   private List<NonTerminalNode> nonTerminals(final Tree<Node> nodeTree) {
     List<Node> treeNodes = new ArrayList<>();
     treeNodes.add(nodeTree.root);
@@ -146,15 +181,4 @@ class StateMachine {
         .collect(toList());
   }
 
-  public Tree<Node> getTree() {
-    return completeTree;
-  }
-
-  public void pop() {
-    nonTerminalsStack.pop();
-  }
-
-  public void reset() {
-    init();
-  }
 }

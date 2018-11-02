@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
 
 public class ChoiceNode implements NonTerminalNode {
 
@@ -22,6 +23,15 @@ public class ChoiceNode implements NonTerminalNode {
   @Override
   public Stream<NonTerminalNode> nonTerminalNodeStream() {
     return choices.stream().flatMap(Node::nonTerminalNodeStream);
+  }
+
+  @Override
+  public List<Node> firstNonTerminals() {
+    return choices.stream()
+        .map(Node::firstNonTerminals)
+        .filter(l -> !l.isEmpty())
+        .map(l -> l.get(0))    // TODO: this is probably not sufficient
+        .collect(toList());
   }
 
   @Override

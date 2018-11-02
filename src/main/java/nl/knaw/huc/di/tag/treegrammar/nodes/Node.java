@@ -1,5 +1,6 @@
 package nl.knaw.huc.di.tag.treegrammar.nodes;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 public interface Node {
@@ -8,4 +9,6 @@ public interface Node {
   Node copy();
 
   Stream<NonTerminalNode> nonTerminalNodeStream();
+
+  List<Node> firstNonTerminals();
 }

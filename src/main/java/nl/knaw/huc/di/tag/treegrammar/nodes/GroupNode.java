@@ -3,6 +3,7 @@ package nl.knaw.huc.di.tag.treegrammar.nodes;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 
 public class GroupNode implements NonTerminalNode {
@@ -21,6 +22,15 @@ public class GroupNode implements NonTerminalNode {
   @Override
   public Stream<NonTerminalNode> nonTerminalNodeStream() {
     return elements.stream().flatMap(Node::nonTerminalNodeStream);
+  }
+
+  @Override
+  public List<Node> firstNonTerminals() {
+    return elements.stream()
+        .map(Node::firstNonTerminals)
+        .filter(l -> !l.isEmpty())
+        .findFirst()
+        .orElse(emptyList());
   }
 
   @Override
