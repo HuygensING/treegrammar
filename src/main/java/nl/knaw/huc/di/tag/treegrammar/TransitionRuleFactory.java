@@ -57,7 +57,11 @@ class TransitionRuleFactory {
     }
     final List<Node> rhsChildren = new ArrayList<>();
     String rawChildren = rhsMatcher.group(3);
-    if (rawChildren != null) {
+    Tree<Node> tree;
+    if (rawChildren == null) {
+      rhsRoot = toNode(rawRHS);
+      tree = new Tree<>(rhsRoot, rhsChildren);
+    } else {
       Matcher nsMatcher = CHOICE_PATTERN.matcher(rawChildren);
       if (nsMatcher.matches()) {
         String[] split = nsMatcher.group(1)
@@ -66,23 +70,20 @@ class TransitionRuleFactory {
             .map(TransitionRuleFactory::toNode)
             .collect(toList());
         final Node orNode = new ChoiceNode(choices);
-        Tree<Node> choiceTree = new Tree(orNode, choices);
-//        rhsChildren.add(choiceTree);
+        tree = new Tree(orNode, choices);
 
-//        return new ChoiceNode(choices);
       } else {
         String[] splitChildren = rawChildren.split("\\s+");
         stream(splitChildren)
             .map(TransitionRuleFactory::toNode)
             .forEach(rhsChildren::add);
+        tree = new Tree<>(rhsRoot, rhsChildren);
       }
-    } else {
-      rhsRoot = toNode(rawRHS);
     }
     if (rhsRoot instanceof NonTerminalMarkupNode) {
       throw new TransitionRuleParseException("The right-hand side of the rule should have a root that is not a  non-terminal");
     }
-    return new Tree<>(rhsRoot, rhsChildren);
+    return tree;
   }
 
   private static void verifyRHS(final String rawRHS, final Matcher rhsMatcher) {

@@ -14,11 +14,11 @@ import static java.util.stream.Collectors.toList;
 //\
 // Een rule heeft een lefthandside (dat is een non terminal markup node
 // Een right hand side: that is een tree.
-class TransitionRule {
+public class TransitionRule {
   final NonTerminalNode lefthandside;
-  final nl.knaw.huc.di.tag.treegrammar.Tree<Node> righthandside;
+  final Tree<Node> righthandside;
 
-  public TransitionRule(NonTerminalNode lefthandside, nl.knaw.huc.di.tag.treegrammar.Tree<Node> righthandside) {
+  public TransitionRule(NonTerminalNode lefthandside, Tree<Node> righthandside) {
     this.lefthandside = lefthandside;
     this.righthandside = righthandside;
   }

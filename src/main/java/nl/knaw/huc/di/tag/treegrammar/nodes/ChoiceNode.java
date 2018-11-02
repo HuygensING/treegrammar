@@ -21,7 +21,7 @@ public class ChoiceNode implements NonTerminalNode {
   @Override
   public Node copy() {
     return this;
-  }
+  } // TODO: copy choices?
 
   @Override
   public String toString() {

@@ -2,6 +2,8 @@ package nl.knaw.huc.di.tag.treegrammar.nodes;
 
 import java.util.List;
 
+import static java.util.stream.Collectors.joining;
+
 public class GroupNode implements NonTerminalNode {
 
   private final List<Node> elements;
@@ -18,5 +20,13 @@ public class GroupNode implements NonTerminalNode {
   @Override
   public Node copy() {
     return this;
+  } //TODO: copy elements?
+
+  @Override
+  public String toString() {
+    return elements.stream()
+        .map(Object::toString)
+        .collect(joining(" ", "{", "}"));
   }
+
 }

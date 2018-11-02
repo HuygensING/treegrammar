@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -91,18 +92,20 @@ class ValidationTest {
   }
 
   @Test
-  void testMultipleTransitionRulesForNonterminal() throws XMLStreamException {
+  void testMultipleTransitionRulesForNonTerminal() throws XMLStreamException {
     String[] ruleStrings = {
         "# => artist[NAME]",
         "NAME => name[({FIRST LAST}|ARTISTNAME)]",
-        "FIRST_LAST => [FIRST LAST]",
         "FIRST => first[_]",
         "LAST => last[_]",
         "ARTISTNAME => artistname[_]"
     };
-    final List<TransitionRule> transitionRules = stream(ruleStrings)
-        .map(TransitionRuleFactory::fromString)
-        .collect(toList());
+//    final List<TransitionRule> transitionRules = stream(ruleStrings)
+//        .map(TransitionRuleFactory::fromString)
+//        .collect(toList());
+
+    String tgsScript = stream(ruleStrings).collect(joining("\n"));
+    List<TransitionRule> transitionRules = new TransitionRuleSetFactory().fromTGS(tgsScript);
 
     LOG.info("transitionrules={}", transitionRules);
     XMLValidatorUsingTreeGrammars validator = new XMLValidatorUsingTreeGrammars(transitionRules);
