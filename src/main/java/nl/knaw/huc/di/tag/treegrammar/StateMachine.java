@@ -28,7 +28,7 @@ class StateMachine {
   private Tree<Node> completeTree; // tree die we aan het opbouwen zijn
   private final List<TransitionRule> rules = new ArrayList<>();
   private final Map<NonTerminalNode, Tree<Node>> nodeReplacementMap = new HashMap<>();
-  private final Deque<List<NonTerminalNode>> nonTerminalsStack = new ArrayDeque<>();
+  private final List<NonTerminalNode> nonTerminalsToProcess = new ArrayList<>();
 
   StateMachine() {
     init();
@@ -39,10 +39,8 @@ class StateMachine {
     this.completeTree = new Tree<>(startNode);
 //    this.pointerToCurrentNode = startNode;
     // nu hebben we nog transitie rules nodig.
-    nonTerminalsStack.clear();
-    ArrayList<NonTerminalNode> nonTerminals = new ArrayList<>();
-    nonTerminals.add(startNode);
-    nonTerminalsStack.push(nonTerminals);
+    nonTerminalsToProcess.clear();
+    nonTerminalsToProcess.add(startNode);
   }
 
   public void addTransitionRule(TransitionRule transitionRule) {
@@ -63,7 +61,6 @@ class StateMachine {
 
     LOG.info("nextNonTerminals={}", nextNonTerminals());
 
-    List<NonTerminalNode> nonTerminalsToProcess = nonTerminalsStack.peek();
     if (nonTerminalsToProcess.isEmpty()) {
       throw new RuntimeException("Unexpected node " + node);
     }
@@ -133,7 +130,7 @@ class StateMachine {
       completeTree.mergeTreeIntoCurrentTree(nonTerminalNode, rhsCopy);
     }
     List<NonTerminalNode> nonTerminalNodeList = nonTerminals(replacementTree);
-    nonTerminalsStack.push(nonTerminalNodeList);
+    nonTerminalsToProcess.addAll(0, nonTerminalNodeList);
 //      nonTerminalNode = theRule.firstNonTerminalNode().orElse(null);
 
     LOG.info("nonTerminalNode={}", nonTerminalNode);
@@ -164,7 +161,7 @@ class StateMachine {
   }
 
   void pop() {
-    nonTerminalsStack.pop();
+    // TODO?
   }
 
   void reset() {
