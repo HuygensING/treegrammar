@@ -1,9 +1,6 @@
 package nl.knaw.huc.di.tag.treegrammar.nodes;
 
-import java.util.List;
 import java.util.stream.Stream;
-
-import static java.util.Collections.emptyList;
 
 /**
  * Created by ronalddekker on 28/09/18.
@@ -13,6 +10,10 @@ public class TagNode implements TerminalNode {
 
   public TagNode(String tag) {
     this.tag = tag;
+  }
+
+  public String getTag() {
+    return tag;
   }
 
   @Override
@@ -26,11 +27,6 @@ public class TagNode implements TerminalNode {
   }
 
   @Override
-  public List<Node> firstNonTerminals() {
-    return emptyList();
-  }
-
-  @Override
   public Node copy() {
     return new TagNode(tag);
   }
@@ -39,4 +35,5 @@ public class TagNode implements TerminalNode {
   public String toString() {
     return tag;
   }
+
 }

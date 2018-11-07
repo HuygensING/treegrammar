@@ -1,9 +1,6 @@
 package nl.knaw.huc.di.tag.treegrammar.nodes;
 
-import java.util.List;
 import java.util.stream.Stream;
-
-import static java.util.Collections.singletonList;
 
 public class StartNode implements NonTerminalNode {
   public static final String CIPHER = "#";
@@ -19,11 +16,6 @@ public class StartNode implements NonTerminalNode {
   @Override
   public Stream<NonTerminalNode> nonTerminalNodeStream() {
     return Stream.of(this);
-  }
-
-  @Override
-  public List<Node> firstNonTerminals() {
-    return singletonList(this);
   }
 
   @Override

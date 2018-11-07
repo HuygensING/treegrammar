@@ -26,15 +26,6 @@ public class ChoiceNode implements NonTerminalNode {
   }
 
   @Override
-  public List<Node> firstNonTerminals() {
-    return choices.stream()
-        .map(Node::firstNonTerminals)
-        .filter(l -> !l.isEmpty())
-        .map(l -> l.get(0))    // TODO: this is probably not sufficient
-        .collect(toList());
-  }
-
-  @Override
   public Node copy() {
     return this;
   } // TODO: copy choices?

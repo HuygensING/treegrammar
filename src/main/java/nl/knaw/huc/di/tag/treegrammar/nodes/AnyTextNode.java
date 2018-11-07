@@ -1,9 +1,6 @@
 package nl.knaw.huc.di.tag.treegrammar.nodes;
 
-import java.util.List;
 import java.util.stream.Stream;
-
-import static java.util.Collections.emptyList;
 
 public class AnyTextNode implements NonTerminalNode {
 
@@ -21,10 +18,6 @@ public class AnyTextNode implements NonTerminalNode {
   public Stream<NonTerminalNode> nonTerminalNodeStream() {
     return Stream.empty();
   }
-  @Override
-  public List<Node> firstNonTerminals() {
-    return emptyList();
-  }
 
   @Override
   public Node copy() {
@@ -34,5 +27,15 @@ public class AnyTextNode implements NonTerminalNode {
   @Override
   public String toString() {
     return CIPHER;
+  }
+
+  @Override
+  public int hashCode() {
+    return getClass().hashCode();
+  }
+
+  @Override
+  public boolean equals(final Object obj) {
+    return obj instanceof AnyTextNode;
   }
 }

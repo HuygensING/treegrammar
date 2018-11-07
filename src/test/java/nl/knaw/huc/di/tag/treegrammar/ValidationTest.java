@@ -91,7 +91,7 @@ class ValidationTest {
   }
 
   @Test
-  void testMultipleTransitionRulesForNonTerminal() throws XMLStreamException {
+  void testChoiceForNonTerminal() throws XMLStreamException {
     String[] ruleStrings = {
         "# => artist[NAME]",
         "NAME => name[({FIRST LAST}|ARTISTNAME)]",
@@ -99,10 +99,6 @@ class ValidationTest {
         "LAST => last[_]",
         "ARTISTNAME => artistname[_]"
     };
-//    final List<TransitionRule> transitionRules = stream(ruleStrings)
-//        .map(TransitionRuleFactory::fromString)
-//        .collect(toList());
-
     String tgsScript = String.join("\n", ruleStrings);
     List<TransitionRule> transitionRules = new TransitionRuleSetFactory().fromTGS(tgsScript);
 
@@ -120,10 +116,24 @@ class ValidationTest {
         "| | | \"John\"\n" +
         "| | last\n" +
         "| | | \"Doe\"";
-    assertTreeVisualisation(validator, expected);
     LOG.info("transitionrules={}", transitionRules);
+    assertTreeVisualisation(validator, expected);
+  }
 
-    validator.reset();
+  @Test
+  void testChoiceForNonTerminal2() throws XMLStreamException {
+    String[] ruleStrings = {
+        "# => artist[NAME]",
+        "NAME => name[({FIRST LAST}|ARTISTNAME)]",
+        "FIRST => first[_]",
+        "LAST => last[_]",
+        "ARTISTNAME => artistname[_]"
+    };
+    String tgsScript = String.join("\n", ruleStrings);
+    List<TransitionRule> transitionRules = new TransitionRuleSetFactory().fromTGS(tgsScript);
+
+    LOG.info("transitionrules={}", transitionRules);
+    XMLValidatorUsingTreeGrammars validator = new XMLValidatorUsingTreeGrammars(transitionRules);
     validator.parse("<artist>" +
         "<name>" +
         "<artistname>The JohnDoes</artistname>" +

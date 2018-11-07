@@ -1,7 +1,5 @@
 package nl.knaw.huc.di.tag.treegrammar.nodes;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.stream.Stream;
 
 public class NonTerminalMarkupNode implements NonTerminalNode {
@@ -20,11 +18,6 @@ public class NonTerminalMarkupNode implements NonTerminalNode {
   @Override
   public Stream<NonTerminalNode> nonTerminalNodeStream() {
     return Stream.of(this);
-  }
-
-  @Override
-  public List<Node> firstNonTerminals() {
-    return Collections.singletonList(this);
   }
 
   @Override

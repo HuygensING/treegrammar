@@ -25,15 +25,6 @@ public class GroupNode implements NonTerminalNode {
   }
 
   @Override
-  public List<Node> firstNonTerminals() {
-    return elements.stream()
-        .map(Node::firstNonTerminals)
-        .filter(l -> !l.isEmpty())
-        .findFirst()
-        .orElse(emptyList());
-  }
-
-  @Override
   public Node copy() {
     return this;
   } //TODO: copy elements?

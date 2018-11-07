@@ -33,6 +33,22 @@ class TransitionRuleSetFactoryTest {
     List<TransitionRule> transitionRules = new TransitionRuleSetFactory().fromTGS(rule);
     LOG.info("transitionRules={}", transitionRules);
     assertThat(transitionRules).hasSize(1);
+    TransitionRule transitionRule = transitionRules.get(0);
+    assertThat(transitionRule.lefthandside).isInstanceOf(NonTerminalMarkupNode.class);
+    assertThat((NonTerminalMarkupNode) transitionRule.lefthandside).extracting("variableName").contains("NAME");
+    Tree<Node> righthandside = transitionRule.righthandside;
+    // expecting (artist (choice(group(FIRST LAST) ARTIST_NAME)))
+    Node root = righthandside.root;
+    Node expectedRoot = new TagNode("name");
+    assertThat(root).isEqualToComparingFieldByField(expectedRoot);
+    assertThat(righthandside.children.keySet().stream().map(Object::toString))
+        .contains("name", "({FIRST LAST}|ARTIST_NAME)", "{FIRST LAST}");
+    Node choiceNode = righthandside.getRootChildren().get(0);
+    assertThat(righthandside.children.get(choiceNode).stream().map(Object::toString))
+        .containsExactly("{FIRST LAST}", "ARTIST_NAME");
+    Node groupNode = righthandside.children.get(choiceNode).get(0);
+    assertThat(righthandside.children.get(groupNode).stream().map(Object::toString))
+        .containsExactly("FIRST", "LAST");
   }
 
   @Disabled

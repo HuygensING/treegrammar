@@ -50,8 +50,12 @@ public class Tree<T> {
 //    this.parents.remove(toMerge);
     this.parents.putAll(toMerge.parents);
     T parent = parents.get(nodeToReplace);
-    connect(parent, toMerge.root);
-    disconnect(parent, nodeToReplace);
+    if (parent == null) {
+      throw new RuntimeException("nodeToReplace " + nodeToReplace + " not found in this tree.parents!");
+    }
+    replaceChild(parent, nodeToReplace, toMerge.root);
+//    connect(parent, toMerge.root);
+//    disconnect(parent, nodeToReplace);
   }
 
   public List<T> getRootChildren() {
@@ -75,7 +79,15 @@ public class Tree<T> {
     return result.toString();
   }
 
-  private void connect(T parent, T child) {
+  private void replaceChild(final T parent, final T nodeToReplace, final T replacementNode) {
+    int index = children.get(parent).indexOf(nodeToReplace);
+    children.get(parent).remove(nodeToReplace);
+    children.get(parent).add(index, replacementNode);
+    parents.remove(nodeToReplace, parent);
+    parents.put(replacementNode, parent);
+  }
+
+  void connect(T parent, T child) {
     children.putIfAbsent(parent, new ArrayList<>());
     children.get(parent).add(child);
     parents.put(child, parent);

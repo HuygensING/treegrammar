@@ -9,6 +9,4 @@ public interface Node {
   Node copy();
 
   Stream<NonTerminalNode> nonTerminalNodeStream();
-
-  List<Node> firstNonTerminals();
 }
