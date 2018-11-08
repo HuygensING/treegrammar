@@ -18,7 +18,7 @@ import static java.util.stream.Collectors.joining;
  * Also it makes it easier to merge two trees etc.
  */
 public class Tree<T> {
-  public T root;
+  public final T root;
   // Every node in the tree has a list of children
   final Map<T, List<T>> children;
   // Every node has one parent; this map maps the node to the parent; so reverse
@@ -98,9 +98,9 @@ public class Tree<T> {
 
   private void replaceChild(final T parent, final T nodeToReplace, final T replacementNode) {
     int index = children.get(parent).indexOf(nodeToReplace);
-    children.get(parent).remove(nodeToReplace);
+    children.get(parent).remove(index);
     children.get(parent).add(index, replacementNode);
-    parents.remove(nodeToReplace, parent);
+    parents.remove(nodeToReplace);
     parents.put(replacementNode, parent);
   }
 

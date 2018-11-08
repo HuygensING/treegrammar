@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+import static java.text.MessageFormat.format;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
@@ -21,12 +22,14 @@ import static java.util.stream.Collectors.toList;
  */
 class StateMachine {
   private static final Logger LOG = LoggerFactory.getLogger(StateMachine.class);
+
   private Tree<Node> completeTree; // tree die we aan het opbouwen zijn
-  private final List<TransitionRule> rules = new ArrayList<>();
+  //  private final List<TransitionRule> rules = new ArrayList<>();
   private final Map<NonTerminalNode, Tree<Node>> nodeReplacementMap = new HashMap<>();
 
   StateMachine() {
-    init();
+    StartNode startNode = new StartNode();
+    this.completeTree = new Tree<>(startNode);
   }
 
   public Tree<Node> getTree() {
@@ -40,33 +43,28 @@ class StateMachine {
   }
 
   private void walkSubTreeWithRoot(final Node root) {
-    List<Node> childNodes = new ArrayList<>(completeTree.children.get(root));
-    if (childNodes == null) {
-      childNodes = emptyList();
+    List<Node> originalChildNodes = new ArrayList<>(completeTree.children.get(root));
+    if (originalChildNodes == null) {
+      originalChildNodes = emptyList();
     }
     if (root instanceof ChoiceNode) {
-      if (childNodes.isEmpty()) {
-        throw new RuntimeException("None of the options of " + root + " were found.");
-      } else if (childNodes.size() > 1) {
-        throw new RuntimeException(root + " still has a choice between " + childNodes);
+      if (originalChildNodes.isEmpty()) {
+        throw new RuntimeException(format("None of the options of {0} were found.", root));
+      } else if (originalChildNodes.size() > 1) {
+        throw new RuntimeException(format("{0} still has a choice between {1}", root, originalChildNodes));
       } else {
         completeTree.removeNode(root);
       }
     } else if (root instanceof GroupNode) {
       completeTree.removeNode(root);
     } else if (root instanceof NonTerminalMarkupNode) {
-      throw new RuntimeException("unresolved NonTerminal: " + root);
+      throw new RuntimeException(format("unresolved NonTerminal: {0}", root));
     }
-    childNodes.forEach(this::walkSubTreeWithRoot);
-  }
-
-  private void init() {
-    StartNode startNode = new StartNode();
-    this.completeTree = new Tree<>(startNode);
+    originalChildNodes.forEach(this::walkSubTreeWithRoot);
   }
 
   void addTransitionRule(TransitionRule transitionRule) {
-    this.rules.add(transitionRule);
+//    this.rules.add(transitionRule);
     nodeReplacementMap.put(transitionRule.lefthandside, transitionRule.righthandside);
   }
 
@@ -92,7 +90,9 @@ class StateMachine {
         .collect(toList());
     LOG.info("possible replacements={}", possibleReplacements);
 
-    List<Node> acceptableNodes = possibleReplacements.stream().map(t -> t.root).collect(toList());
+    List<Node> acceptableNodes = possibleReplacements.stream()
+        .map(t -> t.root)
+        .collect(toList());
     LOG.info("acceptable nodes={}", acceptableNodes);
 
     LOG.info("inputNode={}", inputNode);
@@ -115,12 +115,12 @@ class StateMachine {
     }
     if (nodeToReplace == null) {
       if (acceptableNodes.isEmpty()) {
-        throw new RuntimeException("Unexpected node " + inputNode);
+        throw new RuntimeException(format("Unexpected node {0}", inputNode));
       }
       String expected = acceptableNodes.stream()
           .map(Object::toString)
           .collect(joining(" or "));
-      throw new RuntimeException("No match: expected " + expected + ", but got " + inputNode);
+      throw new RuntimeException(format("No match: expected {0}, but got {1}", expected, inputNode));
 
     }
     LOG.info("action: replace node ({}) with tree ({})", nodeToReplace, replacementTree);

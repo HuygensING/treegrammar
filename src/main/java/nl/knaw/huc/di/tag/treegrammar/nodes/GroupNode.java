@@ -3,7 +3,6 @@ package nl.knaw.huc.di.tag.treegrammar.nodes;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
 
 public class GroupNode implements NonTerminalNode {
