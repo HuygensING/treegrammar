@@ -40,7 +40,9 @@ class StateMachine {
   public void exit() {
     // remove choicenodes and groupnodes
     // if any nonterminals remain, throw error
+    LOG.info("\n\n* completeTree (before exit())=\n{}", TreeVisualizer.asText(completeTree));
     walkSubTreeWithRoot(completeTree.root);
+    LOG.info("\n\n* completeTree (after exit())=\n{}", TreeVisualizer.asText(completeTree));
   }
 
   private void walkSubTreeWithRoot(final Node root) {
@@ -68,7 +70,7 @@ class StateMachine {
         completeTree.removeNode(root);
       }
 
-    } else if (root instanceof ZeroOrMoreNode) {
+    } else if (root instanceof ZeroOrMoreNode || root instanceof OneOrMoreNode) {
       List<Node> childNodes = new ArrayList<>(completeTree.children.get(root));
       if (childNodes.size() == 1 && childNodes.get(0) instanceof NonTerminalMarkupNode) {
         completeTree.removeSubTreeWithRootNode(root);
@@ -81,7 +83,7 @@ class StateMachine {
       Node parentNode = completeTree.parents.get(root);
       if (parentNode instanceof ZeroOrOneNode
           || parentNode instanceof ZeroOrMoreNode
-          || parentNode instanceof OneOrMoreNode) {
+      ) {
         completeTree.removeSubTreeWithRootNode(parentNode);
       } else {
         throw new RuntimeException(format("unresolved NonTerminal: {0}", root));
