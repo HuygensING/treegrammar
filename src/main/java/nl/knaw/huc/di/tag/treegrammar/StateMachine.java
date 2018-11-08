@@ -43,6 +43,7 @@ class StateMachine {
   }
 
   private void walkSubTreeWithRoot(final Node root) {
+    completeTree.children.putIfAbsent(root, emptyList());
     List<Node> originalChildNodes = new ArrayList<>(completeTree.children.get(root));
     if (originalChildNodes == null) {
       originalChildNodes = emptyList();
@@ -55,10 +56,24 @@ class StateMachine {
       } else {
         completeTree.removeNode(root);
       }
+
     } else if (root instanceof GroupNode) {
       completeTree.removeNode(root);
+
+    } else if (root instanceof ZeroOrOneNode) {
+      if (completeTree.children.get(root).get(0) instanceof NonTerminalMarkupNode) {
+        completeTree.removeSubTreeWithRootNode(root);
+      } else {
+        completeTree.removeNode(root);
+      }
+
     } else if (root instanceof NonTerminalMarkupNode) {
-      throw new RuntimeException(format("unresolved NonTerminal: {0}", root));
+      Node parentNode = completeTree.parents.get(root);
+      if (parentNode instanceof ZeroOrOneNode) {
+        completeTree.removeSubTreeWithRootNode(parentNode);
+      } else {
+        throw new RuntimeException(format("unresolved NonTerminal: {0}", root));
+      }
     }
     originalChildNodes.forEach(this::walkSubTreeWithRoot);
   }
@@ -115,7 +130,7 @@ class StateMachine {
     }
     if (nodeToReplace == null) {
       if (acceptableNodes.isEmpty()) {
-        throw new RuntimeException(format("Unexpected node {0}", inputNode));
+        throw new RuntimeException(format("Unexpected node: {0}", inputNode));
       }
       String expected = acceptableNodes.stream()
           .map(Object::toString)
@@ -205,6 +220,13 @@ class StateMachine {
           .ifPresent(list::addAll);
 
     } else if (node instanceof ChoiceNode) {
+      completeTree.children.get(node)
+          .stream()
+          .map(this::firstNonTerminals)
+          .filter(l -> !l.isEmpty())
+          .forEach(list::addAll);
+
+    } else if (node instanceof ZeroOrOneNode) {
       completeTree.children.get(node)
           .stream()
           .map(this::firstNonTerminals)

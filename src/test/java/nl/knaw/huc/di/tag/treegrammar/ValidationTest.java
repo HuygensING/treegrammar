@@ -40,7 +40,7 @@ class ValidationTest {
       validator.parse("<root><markup>tekst and <b>more</b> markup</markup></root>");
       fail("Expected an exception");
     } catch (Exception e) {
-      assertThat(e).hasMessage("Unexpected node b");
+      assertThat(e).hasMessage("Unexpected node: b");
     }
   }
 
@@ -90,6 +90,21 @@ class ValidationTest {
     assertTreeVisualisation(validator, expected);
   }
 
+  private List<TransitionRule> getTransitionRulesWithChoice() {
+    String[] ruleStrings = {
+        "# => artist[NAME]",
+        "NAME => name[({FIRST LAST}|ARTISTNAME)]",
+        "FIRST => first[_]",
+        "LAST => last[_]",
+        "ARTISTNAME => artistname[_]"
+    };
+    String tgsScript = String.join("\n", ruleStrings);
+    List<TransitionRule> transitionRules = new TransitionRuleSetFactory().fromTGS(tgsScript);
+
+    LOG.info("transitionrules={}", transitionRules);
+    return transitionRules;
+  }
+
   @Test
   void testChoiceForNonTerminal() throws XMLStreamException {
     List<TransitionRule> transitionRules = getTransitionRulesWithChoice();
@@ -126,19 +141,120 @@ class ValidationTest {
     assertTreeVisualisation(validator, expected2);
   }
 
-  private List<TransitionRule> getTransitionRulesWithChoice() {
+  private XMLValidatorUsingTreeGrammars zeroOrOneElementsValidator() {
     String[] ruleStrings = {
-        "# => artist[NAME]",
-        "NAME => name[({FIRST LAST}|ARTISTNAME)]",
-        "FIRST => first[_]",
-        "LAST => last[_]",
-        "ARTISTNAME => artistname[_]"
+        "# => elements[ELEMENT?]",
+        "ELEMENT => element[_]"
     };
-    String tgsScript = String.join("\n", ruleStrings);
-    List<TransitionRule> transitionRules = new TransitionRuleSetFactory().fromTGS(tgsScript);
+    return validator(ruleStrings);
+  }
 
-    LOG.info("transitionrules={}", transitionRules);
-    return transitionRules;
+  @Test
+  void testZeroOrOneRuleWithValidInput0() throws XMLStreamException {
+    XMLValidatorUsingTreeGrammars validator = zeroOrOneElementsValidator();
+    validator.parse("<elements></elements>");
+    String expected = "elements";
+    assertTreeVisualisation(validator, expected);
+  }
+
+  @Test
+  void testZeroOrOneRuleWithValidInput1() throws XMLStreamException {
+    XMLValidatorUsingTreeGrammars validator = zeroOrOneElementsValidator();
+    validator.parse("<elements><element>Au</element></elements>");
+    String expected = "elements\n" +
+        "| element\n" +
+        "| | \"Au\"";
+    assertTreeVisualisation(validator, expected);
+  }
+
+  @Test
+  void testZeroOrOneRuleWithInvalidInput() throws XMLStreamException {
+    XMLValidatorUsingTreeGrammars validator = zeroOrOneElementsValidator();
+    try {
+      validator.parse("<elements><element>Au</element><element>Pt</element></elements>");
+      fail("Expected an exception");
+    } catch (Exception e) {
+      assertThat(e).hasMessage("Unexpected node: element");
+    }
+  }
+
+  private XMLValidatorUsingTreeGrammars zeroOrMoreElementsValidator() {
+    String[] ruleStrings = {
+        "# => elements[ELEMENT*]",
+        "ELEMENT => element[_]"
+    };
+    return validator(ruleStrings);
+  }
+
+  @Test
+  void testZeroOrMoreRuleWithValidInput0() throws XMLStreamException {
+    XMLValidatorUsingTreeGrammars validator = zeroOrMoreElementsValidator();
+    validator.parse("<elements></elements>");
+    String expected = "elements\n";
+    assertTreeVisualisation(validator, expected);
+  }
+
+  @Test
+  void testZeroOrMoreRuleWithValidInput1() throws XMLStreamException {
+    XMLValidatorUsingTreeGrammars validator = zeroOrMoreElementsValidator();
+    validator.parse("<elements><element>Au</element></elements>");
+    String expected = "elements\n" +
+        "| element\n" +
+        "| | \"Au\"";
+    assertTreeVisualisation(validator, expected);
+  }
+
+  @Test
+  void testZeroOrMoreRuleWithValidInput2() throws XMLStreamException {
+    XMLValidatorUsingTreeGrammars validator = zeroOrMoreElementsValidator();
+    validator.parse("<elements><element>Au</element><element>Pt</element></elements>");
+    String expected = "elements\n" +
+        "| element\n" +
+        "| | \"Au\"\n" +
+        "| element\n" +
+        "| | \"Pt\"";
+    assertTreeVisualisation(validator, expected);
+  }
+
+  private XMLValidatorUsingTreeGrammars oneOrMoreElementsValidator() {
+    String[] ruleStrings = {
+        "# => elements[ELEMENT+]",
+        "ELEMENT => element[_]"
+    };
+    return validator(ruleStrings);
+  }
+
+  @Test
+  void testOneOrMoreRuleWithValidInput1() throws XMLStreamException {
+    XMLValidatorUsingTreeGrammars validator = oneOrMoreElementsValidator();
+    validator.parse("<elements><element>Au</element></elements>");
+    String expected = "elements\n" +
+        "| element\n" +
+        "| | \"Au\"";
+    assertTreeVisualisation(validator, expected);
+  }
+
+  @Test
+  void testOneOrMoreRuleWithValidInput2() throws XMLStreamException {
+    XMLValidatorUsingTreeGrammars validator = oneOrMoreElementsValidator();
+    validator.parse("<elements><element>Au</element><element>Pt</element></elements>");
+    String expected = "elements\n" +
+        "| element\n" +
+        "| | \"Au\"\n" +
+        "| element\n" +
+        "| | \"Pt\"";
+    assertTreeVisualisation(validator, expected);
+  }
+
+  @Test
+  void testOneOrMoreRuleWithInvalidInput() throws XMLStreamException {
+    XMLValidatorUsingTreeGrammars validator = oneOrMoreElementsValidator();
+    try {
+      validator.parse("<elements></elements>");
+      fail("Expected an exception");
+    } catch (Exception e) {
+      assertThat(e).hasMessage("something");
+    }
   }
 
   private void assertTreeVisualisation(final XMLValidatorUsingTreeGrammars validator, final String expected) {
@@ -150,6 +266,12 @@ class ValidationTest {
 
   private TransitionRule parseTransitionRule(final String input) {
     return new TransitionRuleSetFactory().fromTGS(input).get(0);
+  }
+
+  private XMLValidatorUsingTreeGrammars validator(final String[] ruleStrings) {
+    String tgsScript = String.join("\n", ruleStrings);
+    List<TransitionRule> transitionRules = new TransitionRuleSetFactory().fromTGS(tgsScript);
+    return new XMLValidatorUsingTreeGrammars(transitionRules);
   }
 
 }

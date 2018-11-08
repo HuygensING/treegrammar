@@ -54,7 +54,7 @@ public class TransitionRuleSetFactory {
         handleChildContext(c, children, subTrees)
     );
     final Tree<Node> rhsTree = new Tree<>(root, children);
-    subTrees.forEach(rhsTree.children::put);
+    subTrees.forEach((r, c) -> c.forEach(n -> rhsTree.connect(r, n)));
 
     return rhsTree;
   }
@@ -92,13 +92,59 @@ public class TransitionRuleSetFactory {
         subTrees.put(choiceNode, choices);
         break;
 
+      case zeroOrOne:
+//        c.zeroOrOne().repeatableChild().
+        TGSParser.RepeatableChildContext repeatableChildContext = c.zeroOrOne().repeatableChild();
+        Node childNode = toNode(repeatableChildContext);
+        ZeroOrOneNode zeroOrOneNode = new ZeroOrOneNode(childNode);
+        children.add(zeroOrOneNode);
+        subTrees.put(zeroOrOneNode, Collections.singletonList(childNode));
+        break;
+
+      case zeroOrMore:
+        break;
+
+      case oneOrMore:
+        break;
+
       default:
         throw new RuntimeException("Unhandled ChildType " + childType);
     }
   }
 
+  private Node toNode(final TGSParser.RepeatableChildContext repeatableChildContext) {
+    Node node = null;
+    ChildType childType = childType(repeatableChildContext);
+    switch (childType) {
+      case nonTerminal:
+        String name = repeatableChildContext.nonTerminalMarkup().NONTERMINAL().getText();
+        node = new NonTerminalMarkupNode(name);
+        break;
+
+      case group:
+        final List<Node> groupElements = new ArrayList<>();
+//        c.group().child().forEach(gc -> handleChildContext(gc, groupElements, subTrees));
+//        GroupNode groupNode = new GroupNode(groupElements);
+//        children.add(groupNode);
+//        subTrees.put(groupNode, groupElements);
+        break;
+
+      case choice:
+        final List<Node> choices = new ArrayList<>();
+//        c.choice().child().forEach(gc -> handleChildContext(gc, choices, subTrees));
+//        ChoiceNode choiceNode = new ChoiceNode(choices);
+//        children.add(choiceNode);
+//        subTrees.put(choiceNode, choices);
+        break;
+
+      default:
+        throw new RuntimeException("Unhandled ChildType " + childType);
+    }
+    return node;
+  }
+
   enum ChildType {
-    nonTerminal, terminal, group, choice, text
+    nonTerminal, terminal, group, choice, zeroOrOne, zeroOrMore, oneOrMore, text
   }
 
   private ChildType childType(final TGSParser.ChildContext c) {
@@ -117,7 +163,31 @@ public class TransitionRuleSetFactory {
     if (c.choice() != null) {
       return ChildType.choice;
     }
+    if (c.zeroOrOne() != null) {
+      return ChildType.zeroOrOne;
+    }
+    if (c.zeroOrMore() != null) {
+      return ChildType.zeroOrMore;
+    }
+    if (c.oneOrMore() != null) {
+      return ChildType.oneOrMore;
+    }
+
     throw new RuntimeException("Unable to determine ChildType from ChildContext " + c);
+  }
+
+  private ChildType childType(final TGSParser.RepeatableChildContext c) {
+    if (c.nonTerminalMarkup() != null) {
+      return ChildType.nonTerminal;
+    }
+    if (c.group() != null) {
+      return ChildType.group;
+    }
+    if (c.choice() != null) {
+      return ChildType.choice;
+    }
+
+    throw new RuntimeException("Unable to determine ChildType from RepeatableChildContext " + c);
   }
 
   private Node toNode(final RootContext root) {
