@@ -9,8 +9,6 @@ import org.slf4j.LoggerFactory;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.events.Characters;
-import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import java.io.StringReader;
 import java.util.List;
@@ -26,32 +24,47 @@ class XMLValidatorUsingTreeGrammars {
     transitionRules.forEach(stateMachine::addTransitionRule);
   }
 
+  public Tree<Node> getTree() {
+    return stateMachine.getTree();
+  }
+
   public void parse(String XML_input) throws XMLStreamException {
     // hier maken we een stax parser aan die de XML in stukjes binnen laat komen
     XMLInputFactory factory = XMLInputFactory.newInstance();
     XMLEventReader reader = factory.createXMLEventReader(new StringReader(XML_input));
 
     // we gaan de input af, event voor event.
+    // maar we zijn alleen geïnteresseerd in startElement en characters
     while (reader.hasNext()) {
       XMLEvent xmlEvent = reader.nextEvent();
       LOG.info("xmlEvent={}", xmlEvent);
       if (xmlEvent.isStartElement()) {
-        StartElement s = xmlEvent.asStartElement();
-        String tag = s.getName().getLocalPart();
-        Node tagNode = new TagNode(tag);
+        Node tagNode = createTagNode(xmlEvent);
         stateMachine.processInput(tagNode);
 
       } else if (xmlEvent.isCharacters()) {
-        Characters characters = xmlEvent.asCharacters();
-        String content = characters.toString();
-        Node textNode = new TextNode(content);
+        Node textNode = createTextNode(xmlEvent);
         stateMachine.processInput(textNode);
 
-      } else if (xmlEvent.isEndElement()) {
-        stateMachine.pop();
+//      } else if (xmlEvent.isEndElement()) {
+//        stateMachine.pop();
       }
 //      LOG.info();
     }
+    stateMachine.exit();
+  }
+
+  private Node createTextNode(final XMLEvent xmlEvent) {
+    String content = xmlEvent.asCharacters()
+        .toString();
+    return new TextNode(content);
+  }
+
+  private Node createTagNode(final XMLEvent xmlEvent) {
+    String tag = xmlEvent.asStartElement()
+        .getName()
+        .getLocalPart();
+    return new TagNode(tag);
   }
 
 //  // we moeten verschillende soorten nodes gaan ondersteunen.
@@ -85,11 +98,7 @@ class XMLValidatorUsingTreeGrammars {
   // Tijdens het parsen kan de graph ook nog NonTerminalNodes bevatten
   // Voor een serialisatie van de transition rules moeten we kunnen aangeven of het om een TerminalNode of NonTerminalNode gaat
 
-  public Tree<Node> getTree() {
-    return stateMachine.getTree();
-  }
-
-  public void reset() {
-    stateMachine.reset();
-  }
+//  public void reset() {
+//    stateMachine.reset();
+//  }
 }

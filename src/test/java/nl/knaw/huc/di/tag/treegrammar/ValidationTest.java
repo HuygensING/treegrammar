@@ -92,17 +92,7 @@ class ValidationTest {
 
   @Test
   void testChoiceForNonTerminal() throws XMLStreamException {
-    String[] ruleStrings = {
-        "# => artist[NAME]",
-        "NAME => name[({FIRST LAST}|ARTISTNAME)]",
-        "FIRST => first[_]",
-        "LAST => last[_]",
-        "ARTISTNAME => artistname[_]"
-    };
-    String tgsScript = String.join("\n", ruleStrings);
-    List<TransitionRule> transitionRules = new TransitionRuleSetFactory().fromTGS(tgsScript);
-
-    LOG.info("transitionrules={}", transitionRules);
+    List<TransitionRule> transitionRules = getTransitionRulesWithChoice();
     XMLValidatorUsingTreeGrammars validator = new XMLValidatorUsingTreeGrammars(transitionRules);
     validator.parse("<artist>" +
         "<name>" +
@@ -122,6 +112,21 @@ class ValidationTest {
 
   @Test
   void testChoiceForNonTerminal2() throws XMLStreamException {
+    List<TransitionRule> transitionRules = getTransitionRulesWithChoice();
+    XMLValidatorUsingTreeGrammars validator = new XMLValidatorUsingTreeGrammars(transitionRules);
+    validator.parse("<artist>" +
+        "<name>" +
+        "<artistname>The JohnDoes</artistname>" +
+        "</name>" +
+        "</artist>");
+    String expected2 = "artist\n" +
+        "| name\n" +
+        "| | artistname\n" +
+        "| | | \"The JohnDoes\"";
+    assertTreeVisualisation(validator, expected2);
+  }
+
+  private List<TransitionRule> getTransitionRulesWithChoice() {
     String[] ruleStrings = {
         "# => artist[NAME]",
         "NAME => name[({FIRST LAST}|ARTISTNAME)]",
@@ -133,17 +138,7 @@ class ValidationTest {
     List<TransitionRule> transitionRules = new TransitionRuleSetFactory().fromTGS(tgsScript);
 
     LOG.info("transitionrules={}", transitionRules);
-    XMLValidatorUsingTreeGrammars validator = new XMLValidatorUsingTreeGrammars(transitionRules);
-    validator.parse("<artist>" +
-        "<name>" +
-        "<artistname>The JohnDoes</artistname>" +
-        "</name>" +
-        "</artist>");
-    String expected2 = "artist\n" +
-        "| name\n" +
-        "| | artistname\n" +
-        "| | | \"The JohnDoes\"\n";
-    assertTreeVisualisation(validator, expected2);
+    return transitionRules;
   }
 
   private void assertTreeVisualisation(final XMLValidatorUsingTreeGrammars validator, final String expected) {

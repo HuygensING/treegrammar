@@ -23,35 +23,58 @@ class StateMachine {
   private Tree<Node> completeTree; // tree die we aan het opbouwen zijn
   private final List<TransitionRule> rules = new ArrayList<>();
   private final Map<NonTerminalNode, Tree<Node>> nodeReplacementMap = new HashMap<>();
-  private final List<NonTerminalNode> nonTerminalsToProcess = new ArrayList<>();
 
   StateMachine() {
     init();
   }
 
+  public Tree<Node> getTree() {
+    return completeTree;
+  }
+
+  public void exit() {
+    // remove choicenodes and groupnodes
+    // if any nonterminals remain, throw error
+    walkSubTreeWithRoot(completeTree.root);
+  }
+
+  private void walkSubTreeWithRoot(final Node root) {
+    List<Node> childNodes = new ArrayList<>(completeTree.children.get(root));
+    if (childNodes == null) {
+      childNodes = emptyList();
+    }
+    if (root instanceof ChoiceNode) {
+      if (childNodes.isEmpty()) {
+        throw new RuntimeException("None of the options of " + root + " were found.");
+      } else if (childNodes.size() > 1) {
+        throw new RuntimeException(root + " still has a choice between " + childNodes);
+      } else {
+        completeTree.removeNode(root);
+      }
+    } else if (root instanceof GroupNode) {
+      completeTree.removeNode(root);
+    } else if (root instanceof NonTerminalMarkupNode) {
+      throw new RuntimeException("unresolved NonTerminal: " + root);
+    }
+    childNodes.forEach(this::walkSubTreeWithRoot);
+  }
+
   private void init() {
     StartNode startNode = new StartNode();
     this.completeTree = new Tree<>(startNode);
-//    this.pointerToCurrentNode = startNode;
-    // nu hebben we nog transitie rules nodig.
-    nonTerminalsToProcess.clear();
-    nonTerminalsToProcess.add(startNode);
   }
 
-  public void addTransitionRule(TransitionRule transitionRule) {
+  void addTransitionRule(TransitionRule transitionRule) {
     this.rules.add(transitionRule);
     nodeReplacementMap.put(transitionRule.lefthandside, transitionRule.righthandside);
   }
 
-  // bij de state machine komen nodes binnen
-  // In de tree die we aan het bouwen zijn zitten nog NonTerminal nodes, waarvan er 1 aan de beurt is om vervangen te worden.
-  // We zoeken nu een transition rule die deze NonTerminal aan de linkerkant heeft, en
-  // matched met de binnenkomende node
-
-  // zo niet; dan zitten we in een error.
-  // input zou eigenlijk tree moeten zijn.
-
-  public void processInput(Node inputNode) {
+  void processInput(Node inputNode) {
+    // bij de state machine komen nodes binnen
+    // In de tree die we aan het bouwen zijn zitten nog NonTerminal nodes, waarvan er 1 aan de beurt is om vervangen te worden.
+    // We zoeken nu een transition rule die deze NonTerminal aan de linkerkant heeft, en
+    // matched met de binnenkomende node
+    // zo niet; dan zitten we in een error.
     // We zoeken eerst op naar welke node de huidige pointer verwijst.
     // Dan kijken we welke transitierules er zijn voor dat type node.
     LOG.info("\n\n* completeTree=\n{}", TreeVisualizer.asText(completeTree));
@@ -60,7 +83,7 @@ class StateMachine {
     LOG.info("nextNonTerminals={}", nextNonTerminals);
     AnyTextNode anyTextNode = new AnyTextNode();
     if (nextNonTerminals.contains(anyTextNode) && inputNode instanceof TextNode) {
-      nodeReplacementMap.put(anyTextNode, new Tree(inputNode));
+      nodeReplacementMap.put(anyTextNode, new Tree<>(inputNode));
     }
     List<Tree<Node>> possibleReplacements = nextNonTerminals.stream()
         .map(nodeReplacementMap::get)
@@ -95,18 +118,23 @@ class StateMachine {
 
     LOG.info("action: reject nodes {}", rejectedNonTerminalNodes);
     rejectedNonTerminalNodes.forEach(n -> {
-      Tree<Node> tree = new Tree(new RejectedNode());
-      replaceNodeWithTree(n, tree);
+      Node nodeParent = completeTree.parents.get(n);
+      if (nodeParent instanceof GroupNode) {
+        completeTree.removeSubTreeWithRootNode(nodeParent);
+      } else {
+        completeTree.removeSubTreeWithRootNode(n);
+      }
     });
 
     if (nextNonTerminals.isEmpty()) {
       throw new RuntimeException("Unexpected node " + inputNode);
     }
+    nodeReplacementMap.remove(new AnyTextNode());
 
-    List<Node> matchingNonTerminals = nextNonTerminals.stream()
-        .filter(n -> n.matches(inputNode))
-        .collect(toList());
-    LOG.info("matchingNonTerminals={}", matchingNonTerminals);
+//    List<Node> matchingNonTerminals = nextNonTerminals.stream()
+//        .filter(n -> n.matches(inputNode))
+//        .collect(toList());
+//    LOG.info("matchingNonTerminals={}", matchingNonTerminals);
 
 //    final Node nonTerminalNode = nonTerminalsToProcess.remove(0);
 //    if (nonTerminalNode instanceof AnyTextNode) {
@@ -168,7 +196,31 @@ class StateMachine {
     // het zou beter zijn om dit te indexeren; maar ok..
   }
 
-  private void replaceNodeWithTree(final Node nonTerminalNode, final Tree replacementTree) {
+//  void pop() {
+//    // TODO?
+//  }
+
+//  void reset() {
+//    init();
+//  }
+
+  private List<Node> nextNonTerminals() {
+    final List<Node> list = new ArrayList<>();
+    Node root = completeTree.root;
+    if (root instanceof NonTerminalNode) {
+      list.add(root);
+    } else {
+      List<Node> firstNonTerminals = completeTree.getRootChildren().stream()
+          .map(this::firstNonTerminals)
+          .filter(l -> !l.isEmpty())
+          .findFirst()
+          .orElse(emptyList());
+      list.addAll(firstNonTerminals);
+    }
+    return list;
+  }
+
+  private void replaceNodeWithTree(final Node nonTerminalNode, final Tree<Node> replacementTree) {
     if (nonTerminalNode == completeTree.root) {
       completeTree = replacementTree;
     } else {
@@ -184,6 +236,9 @@ class StateMachine {
     }
     if (node1 instanceof TextNode && node2 instanceof TextNode) {
       return ((TextNode) node1).content.equals(((TextNode) node2).content);
+    }
+    if (node1 instanceof TagNode && node2 instanceof TextNode) {
+      return false;
     }
     throw new RuntimeException("Unhandled comparison between " + node1 + " and " + node2);
   }
@@ -215,26 +270,6 @@ class StateMachine {
         : rootNode.copy();
   }
 
-  public Tree<Node> getTree() {
-    return completeTree;
-  }
-
-  public List<Node> nextNonTerminals() {
-    final List<Node> list = new ArrayList<>();
-    Node root = completeTree.root;
-    if (root instanceof NonTerminalNode) {
-      list.add(root);
-    } else {
-      List<Node> firstNonTerminals = completeTree.getRootChildren().stream()
-          .map(this::firstNonTerminals)
-          .filter(l -> !l.isEmpty())
-          .findFirst()
-          .orElse(emptyList());
-      list.addAll(firstNonTerminals);
-    }
-    return list;
-  }
-
   private List<Node> firstNonTerminals(final Node node) {
     final List<Node> list = new ArrayList<>();
     if (node instanceof NonTerminalMarkupNode || node instanceof StartNode || node instanceof AnyTextNode) {
@@ -256,14 +291,6 @@ class StateMachine {
           .forEach(list::addAll);
     }
     return list;
-  }
-
-  void pop() {
-    // TODO?
-  }
-
-  void reset() {
-    init();
   }
 
   private List<NonTerminalNode> nonTerminals(final Tree<Node> nodeTree) {

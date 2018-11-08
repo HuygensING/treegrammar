@@ -22,7 +22,7 @@ public class Tree<T> {
   // Every node in the tree has a list of children
   final Map<T, List<T>> children;
   // Every node has one parent; this map maps the node to the parent; so reverse
-  private final Map<T, T> parents;
+  final Map<T, T> parents;
 
   public Tree(T root) {
     this.root = root;
@@ -42,7 +42,7 @@ public class Tree<T> {
     }
   }
 
-  public void mergeTreeIntoCurrentTree(T nodeToReplace, Tree<T> toMerge) {
+  void mergeTreeIntoCurrentTree(T nodeToReplace, Tree<T> toMerge) {
     // Copy the children map from the tree container to merge, and connect the parent of the node to replace
     // with the root of the tree to merge
 //    this.children.remove(nodeToReplace);
@@ -58,7 +58,7 @@ public class Tree<T> {
 //    disconnect(parent, nodeToReplace);
   }
 
-  public List<T> getRootChildren() {
+  List<T> getRootChildren() {
     return this.children.get(root);
   }
 
@@ -79,12 +79,36 @@ public class Tree<T> {
     return result.toString();
   }
 
+  void removeSubTreeWithRootNode(final T node) {
+    // all descendants can be removed, too
+    removeChildrenOf(node);
+    T parent = parents.get(node);
+    children.get(parent).remove(node);
+  }
+
+  void removeNode(final T parent) {
+    T grandParent = parents.get(parent);
+    List<T> originalChildren = new ArrayList(children.get(parent));
+    for (T childNode : originalChildren) {
+      disconnect(parent, childNode);
+      connect(grandParent, childNode);
+    }
+    children.get(grandParent).remove(parent);
+  }
+
   private void replaceChild(final T parent, final T nodeToReplace, final T replacementNode) {
     int index = children.get(parent).indexOf(nodeToReplace);
     children.get(parent).remove(nodeToReplace);
     children.get(parent).add(index, replacementNode);
     parents.remove(nodeToReplace, parent);
     parents.put(replacementNode, parent);
+  }
+
+  private void removeChildrenOf(final T node) {
+    if (children.containsKey(node)) {
+      children.get(node).forEach(this::removeChildrenOf);
+      children.remove(node);
+    }
   }
 
   void connect(T parent, T child) {
