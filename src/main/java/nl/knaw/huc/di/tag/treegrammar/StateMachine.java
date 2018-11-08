@@ -4,6 +4,7 @@ import nl.knaw.huc.di.tag.treegrammar.nodes.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.xml.stream.Location;
 import java.util.*;
 
 import static java.text.MessageFormat.format;
@@ -83,7 +84,7 @@ class StateMachine {
     nodeReplacementMap.put(transitionRule.lefthandside, transitionRule.righthandside);
   }
 
-  void processInput(Node inputNode) {
+  void processInput(Node inputNode, final Location location) {
     // bij de state machine komen nodes binnen
     // In de tree die we aan het bouwen zijn zitten nog NonTerminal nodes, waarvan er 1 aan de beurt is om vervangen te worden.
     // We zoeken nu een transition rule die deze NonTerminal aan de linkerkant heeft, en
@@ -91,6 +92,7 @@ class StateMachine {
     // zo niet; dan zitten we in een error.
     // We zoeken eerst op naar welke node de huidige pointer verwijst.
     // Dan kijken we welke transitierules er zijn voor dat type node.
+    String position = position(location);
     LOG.info("\n\n* completeTree=\n{}", TreeVisualizer.asText(completeTree));
 
     List<Node> nextNonTerminals = nextNonTerminals();
@@ -130,12 +132,12 @@ class StateMachine {
     }
     if (nodeToReplace == null) {
       if (acceptableNodes.isEmpty()) {
-        throw new RuntimeException(format("Unexpected node: {0}", inputNode));
+        throw new RuntimeException(format("{0}: Unexpected node: {1}", position, inputNode));
       }
       String expected = acceptableNodes.stream()
           .map(Object::toString)
           .collect(joining(" or "));
-      throw new RuntimeException(format("No match: expected {0}, but got {1}", expected, inputNode));
+      throw new RuntimeException(format("{0}: No match: expected {1}, but got {2}", position, expected, inputNode));
 
     }
     LOG.info("action: replace node ({}) with tree ({})", nodeToReplace, replacementTree);
@@ -153,6 +155,10 @@ class StateMachine {
     });
 
     nodeReplacementMap.remove(new AnyTextNode());
+  }
+
+  private String position(final Location location) {
+    return "@" + location.getLineNumber() + "," + (location.getColumnNumber() - 1);
   }
 
   private List<Node> nextNonTerminals() {

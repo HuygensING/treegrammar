@@ -40,11 +40,11 @@ class XMLValidatorUsingTreeGrammars {
       LOG.info("xmlEvent={}", xmlEvent);
       if (xmlEvent.isStartElement()) {
         Node tagNode = createTagNode(xmlEvent);
-        stateMachine.processInput(tagNode);
+        stateMachine.processInput(tagNode, xmlEvent.getLocation());
 
       } else if (xmlEvent.isCharacters()) {
         Node textNode = createTextNode(xmlEvent);
-        stateMachine.processInput(textNode);
+        stateMachine.processInput(textNode, xmlEvent.getLocation());
       }
     }
     stateMachine.exit();

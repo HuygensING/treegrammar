@@ -40,7 +40,7 @@ class ValidationTest {
       validator.parse("<root><markup>tekst and <b>more</b> markup</markup></root>");
       fail("Expected an exception");
     } catch (Exception e) {
-      assertThat(e).hasMessage("Unexpected node: b");
+      assertThat(e).hasMessage("@1,27: Unexpected node: b");
     }
   }
 
@@ -51,7 +51,7 @@ class ValidationTest {
       validator.parse("<root>plain tekst and <markup>marked-up tekst</markup></root>");
       fail("Expected an exception");
     } catch (Exception e) {
-      assertThat(e).hasMessage("No match: expected markup, but got \"plain tekst and \"");
+      assertThat(e).hasMessage("@1,23: No match: expected markup, but got \"plain tekst and \"");
     }
   }
 
@@ -174,7 +174,7 @@ class ValidationTest {
       validator.parse("<elements><element>Au</element><element>Pt</element></elements>");
       fail("Expected an exception");
     } catch (Exception e) {
-      assertThat(e).hasMessage("Unexpected node: element");
+      assertThat(e).hasMessage("@1,40: Unexpected node: element");
     }
   }
 
