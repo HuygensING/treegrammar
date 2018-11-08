@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 
 /*
@@ -96,7 +97,7 @@ class StateMachine {
 
     LOG.info("inputNode={}", inputNode);
     final List<Tree<Node>> acceptableReplacements = possibleReplacements.stream()
-        .filter(t -> nodesMatch(t.root, inputNode))
+        .filter(t -> t.root.matches(inputNode))
         .collect(toList());
     LOG.info("acceptable replacements={}", acceptableReplacements);
 
@@ -112,6 +113,16 @@ class StateMachine {
         rejectedNonTerminalNodes.add(n);
       }
     }
+    if (nodeToReplace == null) {
+      if (acceptableNodes.isEmpty()) {
+        throw new RuntimeException("Unexpected node " + inputNode);
+      }
+      String expected = acceptableNodes.stream()
+          .map(Object::toString)
+          .collect(joining(" or "));
+      throw new RuntimeException("No match: expected " + expected + ", but got " + inputNode);
+
+    }
     LOG.info("action: replace node ({}) with tree ({})", nodeToReplace, replacementTree);
     Tree<Node> rhsCopy = cloneTree(replacementTree);
     replaceNodeWithTree(nodeToReplace, rhsCopy);
@@ -126,83 +137,8 @@ class StateMachine {
       }
     });
 
-    if (nextNonTerminals.isEmpty()) {
-      throw new RuntimeException("Unexpected node " + inputNode);
-    }
     nodeReplacementMap.remove(new AnyTextNode());
-
-//    List<Node> matchingNonTerminals = nextNonTerminals.stream()
-//        .filter(n -> n.matches(inputNode))
-//        .collect(toList());
-//    LOG.info("matchingNonTerminals={}", matchingNonTerminals);
-
-//    final Node nonTerminalNode = nonTerminalsToProcess.remove(0);
-//    if (nonTerminalNode instanceof AnyTextNode) {
-//      if (!nonTerminalNode.matches(inputNode)) {
-//        throw new RuntimeException("Expected text node, but got " + inputNode);
-//      }
-//      // replace the AnyText node
-//      Tree nodeAsTree = new Tree(inputNode);
-//      replaceNodeWithTree(nonTerminalNode, nodeAsTree);
-//      return;
-//    }
-//
-//    //    LOG.info("applicableRules={}", applicableRules);
-//    if (nonTerminalNode.nonTerminalNodeStream().noneMatch(nodeReplacementMap::containsKey)) {
-//      throw new RuntimeException(format("No transition rule found! Current state: {0}, expected: {1}", inputNode, nonTerminalNode));
-//    }
-//    TransitionRule theRule = applicableRules.get(0); // NOT correct
-//    // if there are more transition rules, then make a ChoiceNode
-//    LOG.info("Transition rule found: {}! We want to know the right hand side", theRule);
-//    Tree<Node> righthandside = theRule.righthandside;
-//    LOG.info("Expectation: {}", righthandside);
-
-    // Nu moeten we checken of de transitierule die we gevonden hebben ook past bij wat we binnen kregen
-    // Ik weet nog niet hoe dat moet gewoon bij
-    // We vervangen de aangewezen node door de nieuwe van de RHS
-    // de current pointer moet dan naar het eerste kind van de RHS
-    // NB: Dit is te simplistisch.
-
-    //    Tree<Node> potentialReplacement = nodeReplacementMap.get(nonTerminalNode);
-    // check whether tag of right hand side is the same as the incoming tag.
-//    Tree<Node> replacementTree = nonTerminalNode.nonTerminalNodeStream()
-//        .map(nodeReplacementMap::get)
-//        .filter(t -> t.root == null
-//            ? t.getRootChildren().get(0).matches(inputNode)
-//            : t.root.matches(inputNode)
-//        )
-//        .findFirst()
-//        .orElseThrow(() -> {
-//          final String expectation = nonTerminalNode.nonTerminalNodeStream()
-//              .map(nodeReplacementMap::get)
-//              .map(t -> t.root)
-//              .filter(Objects::nonNull)
-//              .map(Object::toString)
-//              .collect(joining(" or "));
-//          String message = format("No match: expected {0} but found {1}", expectation, inputNode);
-//          return new RuntimeException(message);
-//        });
-//
-//    Tree<Node> rhsCopy = cloneTree(replacementTree);
-//    replaceNodeWithTree(nonTerminalNode, rhsCopy);
-//    List<NonTerminalNode> nonTerminalNodeList = nonTerminals(replacementTree);
-//    nonTerminalsToProcess.addAll(0, nonTerminalNodeList);
-////      nonTerminalNode = theRule.firstNonTerminalNode().orElse(null);
-//
-//    LOG.info("nonTerminalNode={}", nonTerminalNode);
-    //! Dan gaan we op zoek naar de transitierule van de huidige state
-    //! Gegeven de transitierule en de nieuwe op basis van de input.
-    // we gaan alle transitierules af.
-    // het zou beter zijn om dit te indexeren; maar ok..
   }
-
-//  void pop() {
-//    // TODO?
-//  }
-
-//  void reset() {
-//    init();
-//  }
 
   private List<Node> nextNonTerminals() {
     final List<Node> list = new ArrayList<>();
@@ -226,21 +162,6 @@ class StateMachine {
     } else {
       completeTree.mergeTreeIntoCurrentTree(nonTerminalNode, replacementTree);
     }
-  }
-
-  private boolean nodesMatch(final Node node1, final Node node2) {
-    if (node1 instanceof TagNode && node2 instanceof TagNode) {
-      final TagNode tagNode1 = (TagNode) node1;
-      final TagNode tagNode2 = (TagNode) node2;
-      return tagNode1.getTag().equals(tagNode2.getTag());
-    }
-    if (node1 instanceof TextNode && node2 instanceof TextNode) {
-      return ((TextNode) node1).content.equals(((TextNode) node2).content);
-    }
-    if (node1 instanceof TagNode && node2 instanceof TextNode) {
-      return false;
-    }
-    throw new RuntimeException("Unhandled comparison between " + node1 + " and " + node2);
   }
 
   private Tree<Node> cloneTree(final Tree<Node> replacementTree) {

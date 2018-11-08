@@ -51,7 +51,7 @@ class ValidationTest {
       validator.parse("<root>plain tekst and <markup>marked-up tekst</markup></root>");
       fail("Expected an exception");
     } catch (Exception e) {
-      assertThat(e).hasMessage("No match: expected markup but found \"plain tekst and \"");
+      assertThat(e).hasMessage("No match: expected markup, but got \"plain tekst and \"");
     }
   }
 
