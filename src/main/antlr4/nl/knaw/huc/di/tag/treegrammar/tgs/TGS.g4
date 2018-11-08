@@ -36,10 +36,13 @@ terminalMarkup
 
 child
   : nonTerminalMarkup
-  | terminalMarkup
   | group
   | choice
+  | terminalMarkup
   | textNode
+  | zeroOrOne
+  | zeroOrMore
+  | oneOrMore
   ;
 
 group
@@ -52,6 +55,24 @@ choice
 
 textNode
   : '_'
+  ;
+
+repeatableChild
+  : nonTerminalMarkup
+  | group
+  | choice
+  ;
+
+zeroOrOne
+  : repeatableChild '?'
+  ;
+
+zeroOrMore
+  : repeatableChild '*'
+  ;
+
+oneOrMore
+  : repeatableChild '+'
   ;
 
 NONTERMINAL

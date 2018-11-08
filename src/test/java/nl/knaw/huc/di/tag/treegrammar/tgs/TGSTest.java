@@ -94,6 +94,81 @@ public class TGSTest {
     assertThat(child1).isEqualTo("C");
   }
 
+  @Test
+  public void testRuleWithZeroOrOne() {
+    String rule = "X => x[Y?]";
+    ScriptContext script = parse(rule);
+    assertThat(script).isNotNull();
+
+    TransitionruleContext transitionrule = script.transitionrule(0);
+    String lhs = transitionrule.lhs().nonTerminalMarkup().getText();
+    assertThat(lhs).isEqualTo("X");
+
+    TGSParser.RhsContext rhs = transitionrule.rhs();
+    TGSParser.RootContext root = rhs.root();
+    assertThat(root.terminalMarkup().getText()).isEqualTo("x");
+
+    List<TGSParser.ChildContext> children = rhs.child();
+    assertThat(children).hasSize(1);
+
+    TGSParser.ChildContext childContext = children.get(0);
+    TGSParser.ZeroOrOneContext zeroOrOneContext = childContext.zeroOrOne();
+    assertThat(zeroOrOneContext).isNotNull();
+
+    String nonTerminal = zeroOrOneContext.repeatableChild().nonTerminalMarkup().NONTERMINAL().getText();
+    assertThat(nonTerminal).isEqualTo("Y");
+  }
+
+  @Test
+  public void testRuleWithZeroOrMore() {
+    String rule = "X => x[Y*]";
+    ScriptContext script = parse(rule);
+    assertThat(script).isNotNull();
+
+    TransitionruleContext transitionrule = script.transitionrule(0);
+    String lhs = transitionrule.lhs().nonTerminalMarkup().getText();
+    assertThat(lhs).isEqualTo("X");
+
+    TGSParser.RhsContext rhs = transitionrule.rhs();
+    TGSParser.RootContext root = rhs.root();
+    assertThat(root.terminalMarkup().getText()).isEqualTo("x");
+
+    List<TGSParser.ChildContext> children = rhs.child();
+    assertThat(children).hasSize(1);
+
+    TGSParser.ChildContext childContext = children.get(0);
+    TGSParser.ZeroOrMoreContext zeroOrMoreContext = childContext.zeroOrMore();
+    assertThat(zeroOrMoreContext).isNotNull();
+
+    String nonTerminal = zeroOrMoreContext.repeatableChild().nonTerminalMarkup().NONTERMINAL().getText();
+    assertThat(nonTerminal).isEqualTo("Y");
+  }
+
+  @Test
+  public void testRuleWithOneOrMore() {
+    String rule = "X => x[Y+]";
+    ScriptContext script = parse(rule);
+    assertThat(script).isNotNull();
+
+    TransitionruleContext transitionrule = script.transitionrule(0);
+    String lhs = transitionrule.lhs().nonTerminalMarkup().getText();
+    assertThat(lhs).isEqualTo("X");
+
+    TGSParser.RhsContext rhs = transitionrule.rhs();
+    TGSParser.RootContext root = rhs.root();
+    assertThat(root.terminalMarkup().getText()).isEqualTo("x");
+
+    List<TGSParser.ChildContext> children = rhs.child();
+    assertThat(children).hasSize(1);
+
+    TGSParser.ChildContext childContext = children.get(0);
+    TGSParser.OneOrMoreContext oneOrMoreContext = childContext.oneOrMore();
+    assertThat(oneOrMoreContext).isNotNull();
+
+    String nonTerminal = oneOrMoreContext.repeatableChild().nonTerminalMarkup().NONTERMINAL().getText();
+    assertThat(nonTerminal).isEqualTo("Y");
+  }
+
   private ScriptContext parse(final String rules) {
     CharStream stream = CharStreams.fromString(rules);
     TGSLexer lex = new TGSLexer(stream);
