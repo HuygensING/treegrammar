@@ -90,6 +90,7 @@ public class Tree<T> {
 
   void removeNode(final T parent) {
     T grandParent = parents.get(parent);
+    children.putIfAbsent(parent, emptyList());
     List<T> originalChildren = new ArrayList(children.get(parent));
     for (T childNode : originalChildren) {
       disconnect(parent, childNode);

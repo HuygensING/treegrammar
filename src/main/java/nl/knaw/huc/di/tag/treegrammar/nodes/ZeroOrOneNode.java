@@ -12,7 +12,9 @@ public class ZeroOrOneNode implements Node {
 
   @Override
   public boolean matches(final Node node) {
-    return false;
+    return node instanceof ZeroOrOneNode
+        && ((ZeroOrOneNode) node).childNode.matches(childNode);
+
   }
 
   @Override

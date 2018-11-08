@@ -190,7 +190,7 @@ class ValidationTest {
   void testZeroOrMoreRuleWithValidInput0() throws XMLStreamException {
     XMLValidatorUsingTreeGrammars validator = zeroOrMoreElementsValidator();
     validator.parse("<elements></elements>");
-    String expected = "elements\n";
+    String expected = "elements";
     assertTreeVisualisation(validator, expected);
   }
 

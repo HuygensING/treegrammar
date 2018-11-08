@@ -68,9 +68,20 @@ class StateMachine {
         completeTree.removeNode(root);
       }
 
+    } else if (root instanceof ZeroOrMoreNode) {
+      List<Node> childNodes = new ArrayList<>(completeTree.children.get(root));
+      if (childNodes.size() == 1 && childNodes.get(0) instanceof NonTerminalMarkupNode) {
+        completeTree.removeSubTreeWithRootNode(root);
+      } else {
+        childNodes.stream().filter(NonTerminalMarkupNode.class::isInstance).forEach(completeTree::removeNode);
+        completeTree.removeNode(root);
+      }
+
     } else if (root instanceof NonTerminalMarkupNode) {
       Node parentNode = completeTree.parents.get(root);
-      if (parentNode instanceof ZeroOrOneNode) {
+      if (parentNode instanceof ZeroOrOneNode
+          || parentNode instanceof ZeroOrMoreNode
+          || parentNode instanceof OneOrMoreNode) {
         completeTree.removeSubTreeWithRootNode(parentNode);
       } else {
         throw new RuntimeException(format("unresolved NonTerminal: {0}", root));
@@ -138,11 +149,16 @@ class StateMachine {
           .map(Object::toString)
           .collect(joining(" or "));
       throw new RuntimeException(format("{0}: No match: expected {1}, but got {2}", position, expected, inputNode));
-
     }
+
+    Node parent = completeTree.parents.get(nodeToReplace);
+    boolean parentIsXOrMoreNode = (parent instanceof ZeroOrMoreNode || parent instanceof OneOrMoreNode);
     LOG.info("action: replace node ({}) with tree ({})", nodeToReplace, replacementTree);
     Tree<Node> rhsCopy = cloneTree(replacementTree);
     replaceNodeWithTree(nodeToReplace, rhsCopy);
+    if (parentIsXOrMoreNode) {
+      completeTree.connect(parent, nodeToReplace);
+    }
 
     LOG.info("action: reject nodes {}", rejectedNonTerminalNodes);
     rejectedNonTerminalNodes.forEach(n -> {
@@ -217,7 +233,11 @@ class StateMachine {
     if (node instanceof NonTerminalMarkupNode || node instanceof StartNode || node instanceof AnyTextNode) {
       list.add(node);
 
-    } else if (node instanceof TagNode || node instanceof GroupNode) {
+    } else if (node instanceof TagNode
+        || node instanceof GroupNode
+        || node instanceof ZeroOrOneNode
+        || node instanceof ZeroOrMoreNode
+        || node instanceof OneOrMoreNode) {
       completeTree.children.get(node)
           .stream()
           .map(this::firstNonTerminals)
@@ -226,13 +246,6 @@ class StateMachine {
           .ifPresent(list::addAll);
 
     } else if (node instanceof ChoiceNode) {
-      completeTree.children.get(node)
-          .stream()
-          .map(this::firstNonTerminals)
-          .filter(l -> !l.isEmpty())
-          .forEach(list::addAll);
-
-    } else if (node instanceof ZeroOrOneNode) {
       completeTree.children.get(node)
           .stream()
           .map(this::firstNonTerminals)

@@ -30,4 +30,14 @@ public class OneOrMoreNode implements Node {
   public String toString() {
     return childNode + "*";
   }
+  @Override
+  public int hashCode() {
+    return getClass().hashCode() + childNode.hashCode();
+  }
+
+  @Override
+  public boolean equals(final Object obj) {
+    return obj instanceof OneOrMoreNode
+        && ((OneOrMoreNode) obj).childNode.equals(childNode);
+  }
 }

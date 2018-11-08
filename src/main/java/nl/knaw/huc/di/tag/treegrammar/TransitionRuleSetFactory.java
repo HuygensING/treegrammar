@@ -93,7 +93,6 @@ public class TransitionRuleSetFactory {
         break;
 
       case zeroOrOne:
-//        c.zeroOrOne().repeatableChild().
         TGSParser.RepeatableChildContext repeatableChildContext = c.zeroOrOne().repeatableChild();
         Node childNode = toNode(repeatableChildContext);
         ZeroOrOneNode zeroOrOneNode = new ZeroOrOneNode(childNode);
@@ -102,9 +101,19 @@ public class TransitionRuleSetFactory {
         break;
 
       case zeroOrMore:
+        TGSParser.RepeatableChildContext repeatableChildContext1 = c.zeroOrMore().repeatableChild();
+        Node childNode1 = toNode(repeatableChildContext1);
+        ZeroOrMoreNode zeroOrMoreNode = new ZeroOrMoreNode(childNode1);
+        children.add(zeroOrMoreNode);
+        subTrees.put(zeroOrMoreNode, Collections.singletonList(childNode1));
         break;
 
       case oneOrMore:
+        TGSParser.RepeatableChildContext repeatableChildContext2 = c.oneOrMore().repeatableChild();
+        Node childNode2 = toNode(repeatableChildContext2);
+        OneOrMoreNode oneOrMoreNode = new OneOrMoreNode(childNode2);
+        children.add(oneOrMoreNode);
+        subTrees.put(oneOrMoreNode, Collections.singletonList(childNode2));
         break;
 
       default:
