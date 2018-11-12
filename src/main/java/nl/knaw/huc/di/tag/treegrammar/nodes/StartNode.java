@@ -1,5 +1,8 @@
 package nl.knaw.huc.di.tag.treegrammar.nodes;
 
+import nl.knaw.huc.di.tag.treegrammar.Tree;
+
+import java.util.List;
 import java.util.stream.Stream;
 
 public class StartNode implements NonTerminalNode {
@@ -16,6 +19,11 @@ public class StartNode implements NonTerminalNode {
   @Override
   public Stream<NonTerminalNode> nonTerminalNodeStream() {
     return Stream.of(this);
+  }
+
+  @Override
+  public void postProcess(Tree<Node> completeTree, List<Node> rootChildren) {
+    //TODO
   }
 
   @Override

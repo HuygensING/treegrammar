@@ -1,6 +1,11 @@
 package nl.knaw.huc.di.tag.treegrammar.nodes;
 
+import nl.knaw.huc.di.tag.treegrammar.Tree;
+
+import java.util.List;
 import java.util.stream.Stream;
+
+import static java.text.MessageFormat.format;
 
 public class NonTerminalMarkupNode implements NonTerminalNode {
   private final String variableName;
@@ -18,6 +23,23 @@ public class NonTerminalMarkupNode implements NonTerminalNode {
   @Override
   public Stream<NonTerminalNode> nonTerminalNodeStream() {
     return Stream.of(this);
+  }
+
+  @Override
+  public void postProcess(Tree<Node> completeTree, List<Node> rootChildren) {
+    Node parentNode = completeTree.parents.get(this);
+    if (parentNode instanceof ZeroOrOneNode
+        || parentNode instanceof ZeroOrMoreNode) {
+      completeTree.removeSubTreeWithRootNode(parentNode);
+
+    } else if (parentNode instanceof OneOrMoreNode) {
+      completeTree.removeNode(this);
+      completeTree.removeNode(parentNode);
+
+    } else {
+      throw new RuntimeException(format("unresolved NonTerminal: {0}", this));
+    }
+
   }
 
   @Override

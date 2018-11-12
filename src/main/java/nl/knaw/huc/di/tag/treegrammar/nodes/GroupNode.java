@@ -1,5 +1,7 @@
 package nl.knaw.huc.di.tag.treegrammar.nodes;
 
+import nl.knaw.huc.di.tag.treegrammar.Tree;
+
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -21,6 +23,12 @@ public class GroupNode implements NonTerminalNode {
   @Override
   public Stream<NonTerminalNode> nonTerminalNodeStream() {
     return elements.stream().flatMap(Node::nonTerminalNodeStream);
+  }
+
+  @Override
+  public void postProcess(Tree<Node> completeTree, List<Node> rootChildren) {
+    completeTree.removeNode(this);
+
   }
 
   @Override

@@ -48,66 +48,10 @@ class StateMachine {
   private void walkSubTreeWithRoot(final Node root) {
     completeTree.children.putIfAbsent(root, emptyList());
     List<Node> rootChildren = completeTree.children.get(root);
-    List<Node> originalChildNodes = new ArrayList<>(rootChildren);
-    if (rootChildren == null) {
-      originalChildNodes = emptyList();
-    }
-    if (root instanceof ChoiceNode) {
-      if (originalChildNodes.isEmpty()) {
-        throw new RuntimeException(format("None of the options of {0} were found.", root));
-      } else if (originalChildNodes.size() > 1) {
-        throw new RuntimeException(format("{0} still has a choice between {1}", root, originalChildNodes));
-      } else {
-        completeTree.removeNode(root);
-      }
-
-    } else if (root instanceof GroupNode) {
-      completeTree.removeNode(root);
-
-    } else if (root instanceof ZeroOrOneNode) {
-      if (rootChildren.get(0) instanceof NonTerminalMarkupNode) {
-        completeTree.removeSubTreeWithRootNode(root);
-      } else {
-        completeTree.removeNode(root);
-      }
-
-    } else if (root instanceof ZeroOrMoreNode) {
-      List<Node> childNodes = new ArrayList<>(rootChildren);
-      if (childNodes.size() == 1 && childNodes.get(0) instanceof NonTerminalMarkupNode) {
-        completeTree.removeSubTreeWithRootNode(root);
-      } else {
-        childNodes.stream()
-            .filter(NonTerminalMarkupNode.class::isInstance)
-            .forEach(completeTree::removeNode);
-        completeTree.removeNode(root);
-      }
-
-    } else if (root instanceof OneOrMoreNode) {
-      List<Node> childNodes = new ArrayList<>(rootChildren);
-      if (childNodes.size() == 1 && childNodes.get(0) instanceof NonTerminalMarkupNode) {
-        completeTree.removeSubTreeWithRootNode(root);
-        throw new RuntimeException(format("{0} should have at least one NonTerminal, but has none.", root));
-      } else {
-        childNodes.stream()
-            .filter(NonTerminalMarkupNode.class::isInstance)
-            .forEach(completeTree::removeNode);
-        completeTree.removeNode(root);
-      }
-
-    } else if (root instanceof NonTerminalMarkupNode) {
-      Node parentNode = completeTree.parents.get(root);
-      if (parentNode instanceof ZeroOrOneNode
-          || parentNode instanceof ZeroOrMoreNode) {
-        completeTree.removeSubTreeWithRootNode(parentNode);
-
-      } else if (parentNode instanceof OneOrMoreNode) {
-        completeTree.removeNode(root);
-        completeTree.removeNode(parentNode);
-
-      } else {
-        throw new RuntimeException(format("unresolved NonTerminal: {0}", root));
-      }
-    }
+    root.postProcess(completeTree, rootChildren);
+    List<Node> originalChildNodes = (rootChildren == null)
+        ? emptyList()
+        : new ArrayList<>(rootChildren);
     originalChildNodes.forEach(this::walkSubTreeWithRoot);
   }
 

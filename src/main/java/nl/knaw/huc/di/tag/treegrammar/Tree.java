@@ -23,7 +23,7 @@ public class Tree<T> {
   // Every node in the tree has a list of children
   final Map<T, List<T>> children;
   // Every node has one parent; this map maps the node to the parent; so reverse
-  final Map<T, T> parents;
+  public final Map<T, T> parents;
 
   public Tree(T root) {
     this.root = root;
@@ -81,14 +81,14 @@ public class Tree<T> {
     return result.toString();
   }
 
-  void removeSubTreeWithRootNode(final T node) {
+  public void removeSubTreeWithRootNode(final T node) {
     // all descendants can be removed, too
     removeChildrenOf(node);
     T parent = parents.get(node);
     children.get(parent).remove(node);
   }
 
-  void removeNode(final T parent) {
+  public void removeNode(final T parent) {
     T grandParent = parents.get(parent);
     children.putIfAbsent(parent, emptyList());
     List<T> originalChildren = new ArrayList(children.remove(parent));

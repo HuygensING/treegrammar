@@ -1,9 +1,12 @@
 package nl.knaw.huc.di.tag.treegrammar.nodes;
 
+import nl.knaw.huc.di.tag.treegrammar.Tree;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static java.text.MessageFormat.format;
 import static java.util.stream.Collectors.joining;
 
 public class ChoiceNode implements NonTerminalNode {
@@ -22,6 +25,22 @@ public class ChoiceNode implements NonTerminalNode {
   @Override
   public Stream<NonTerminalNode> nonTerminalNodeStream() {
     return choices.stream().flatMap(Node::nonTerminalNodeStream);
+  }
+
+  @Override
+  public void postProcess(Tree<Node> completeTree, List<Node> childNodes) {
+    if (childNodes.isEmpty()) {
+      throw new RuntimeException(
+          format("None of the options of {0} were found.", this)
+      );
+    } else if (childNodes.size() > 1) {
+      throw new RuntimeException(
+          format("{0} still has a choice between {1}", this, childNodes)
+      );
+    } else {
+      completeTree.removeNode(this);
+    }
+
   }
 
   @Override

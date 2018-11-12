@@ -1,10 +1,13 @@
 package nl.knaw.huc.di.tag.treegrammar.nodes;
 
+import nl.knaw.huc.di.tag.treegrammar.Tree;
+
+import java.util.List;
 import java.util.stream.Stream;
 
 public class ZeroOrOneNode implements Node {
   int count = 0;
-  private Node childNode;
+  private final Node childNode;
 
   public ZeroOrOneNode(final Node childNode) {
     this.childNode = childNode;
@@ -14,7 +17,6 @@ public class ZeroOrOneNode implements Node {
   public boolean matches(final Node node) {
     return node instanceof ZeroOrOneNode
         && ((ZeroOrOneNode) node).childNode.matches(childNode);
-
   }
 
   @Override
@@ -25,6 +27,16 @@ public class ZeroOrOneNode implements Node {
   @Override
   public Stream<NonTerminalNode> nonTerminalNodeStream() {
     return childNode.nonTerminalNodeStream();
+  }
+
+  @Override
+  public void postProcess(Tree<Node> completeTree, List<Node> rootChildren) {
+    if (rootChildren.get(0) instanceof NonTerminalMarkupNode) {
+      completeTree.removeSubTreeWithRootNode(this);
+    } else {
+      completeTree.removeNode(this);
+    }
+
   }
 
   @Override

@@ -1,5 +1,8 @@
 package nl.knaw.huc.di.tag.treegrammar.nodes;
 
+import nl.knaw.huc.di.tag.treegrammar.Tree;
+
+import java.util.List;
 import java.util.stream.Stream;
 
 /**
@@ -24,6 +27,11 @@ public class TagNode implements TerminalNode {
   @Override
   public Stream<NonTerminalNode> nonTerminalNodeStream() {
     return Stream.empty();
+  }
+
+  @Override
+  public void postProcess(Tree<Node> completeTree, List<Node> rootChildren) {
+
   }
 
   @Override

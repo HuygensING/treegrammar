@@ -1,10 +1,16 @@
 package nl.knaw.huc.di.tag.treegrammar.nodes;
 
+import nl.knaw.huc.di.tag.treegrammar.Tree;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Stream;
+
+import static java.text.MessageFormat.format;
 
 public class OneOrMoreNode implements Node {
   int count = 0;
-  private Node childNode;
+  private final Node childNode;
 
   public OneOrMoreNode(final Node childNode) {
     this.childNode = childNode;
@@ -27,9 +33,25 @@ public class OneOrMoreNode implements Node {
   }
 
   @Override
+  public void postProcess(Tree<Node> completeTree, List<Node> rootChildren) {
+    List<Node> childNodes = new ArrayList<>(rootChildren);
+    if (childNodes.size() == 1 && childNodes.get(0) instanceof NonTerminalMarkupNode) {
+      completeTree.removeSubTreeWithRootNode(this);
+      throw new RuntimeException(format("{0} should have at least one NonTerminal, but has none.", this));
+    } else {
+      childNodes.stream()
+          .filter(NonTerminalMarkupNode.class::isInstance)
+          .forEach(completeTree::removeNode);
+      completeTree.removeNode(this);
+    }
+
+  }
+
+  @Override
   public String toString() {
     return childNode + "*";
   }
+
   @Override
   public int hashCode() {
     return getClass().hashCode() + childNode.hashCode();
