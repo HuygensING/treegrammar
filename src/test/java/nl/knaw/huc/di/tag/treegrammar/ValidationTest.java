@@ -168,7 +168,7 @@ class ValidationTest {
   }
 
   @Test
-  void testZeroOrOneRuleWithInvalidInput() throws XMLStreamException {
+  void testZeroOrOneRuleWithInvalidInput() {
     XMLValidatorUsingTreeGrammars validator = zeroOrOneElementsValidator();
     try {
       validator.parse("<elements><element>Au</element><element>Pt</element></elements>");

@@ -47,8 +47,9 @@ class StateMachine {
 
   private void walkSubTreeWithRoot(final Node root) {
     completeTree.children.putIfAbsent(root, emptyList());
-    List<Node> originalChildNodes = new ArrayList<>(completeTree.children.get(root));
-    if (originalChildNodes == null) {
+    List<Node> rootChildren = completeTree.children.get(root);
+    List<Node> originalChildNodes = new ArrayList<>(rootChildren);
+    if (rootChildren == null) {
       originalChildNodes = emptyList();
     }
     if (root instanceof ChoiceNode) {
@@ -64,14 +65,14 @@ class StateMachine {
       completeTree.removeNode(root);
 
     } else if (root instanceof ZeroOrOneNode) {
-      if (completeTree.children.get(root).get(0) instanceof NonTerminalMarkupNode) {
+      if (rootChildren.get(0) instanceof NonTerminalMarkupNode) {
         completeTree.removeSubTreeWithRootNode(root);
       } else {
         completeTree.removeNode(root);
       }
 
     } else if (root instanceof ZeroOrMoreNode) {
-      List<Node> childNodes = new ArrayList<>(completeTree.children.get(root));
+      List<Node> childNodes = new ArrayList<>(rootChildren);
       if (childNodes.size() == 1 && childNodes.get(0) instanceof NonTerminalMarkupNode) {
         completeTree.removeSubTreeWithRootNode(root);
       } else {
@@ -82,7 +83,7 @@ class StateMachine {
       }
 
     } else if (root instanceof OneOrMoreNode) {
-      List<Node> childNodes = new ArrayList<>(completeTree.children.get(root));
+      List<Node> childNodes = new ArrayList<>(rootChildren);
       if (childNodes.size() == 1 && childNodes.get(0) instanceof NonTerminalMarkupNode) {
         completeTree.removeSubTreeWithRootNode(root);
         throw new RuntimeException(format("{0} should have at least one NonTerminal, but has none.", root));
