@@ -28,7 +28,6 @@ public class GroupNode implements NonTerminalNode {
   @Override
   public void postProcess(Tree<Node> completeTree, List<Node> rootChildren) {
     completeTree.removeNode(this);
-
   }
 
   @Override
