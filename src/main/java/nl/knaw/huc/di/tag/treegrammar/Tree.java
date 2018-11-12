@@ -91,12 +91,14 @@ public class Tree<T> {
   void removeNode(final T parent) {
     T grandParent = parents.get(parent);
     children.putIfAbsent(parent, emptyList());
-    List<T> originalChildren = new ArrayList(children.get(parent));
+    List<T> originalChildren = new ArrayList(children.remove(parent));
     for (T childNode : originalChildren) {
       disconnect(parent, childNode);
       connect(grandParent, childNode);
     }
-    children.get(grandParent).remove(parent);
+    if (children.containsKey(grandParent)) {
+      children.get(grandParent).remove(parent);
+    }
   }
 
   private void replaceChild(final T parent, final T nodeToReplace, final T replacementNode) {
@@ -121,7 +123,9 @@ public class Tree<T> {
   }
 
   private void disconnect(T parent, T child) {
-    children.get(parent).remove(child);
+    if (children.containsKey(parent)) {
+      children.get(parent).remove(child);
+    }
     parents.remove(child, parent);
   }
 

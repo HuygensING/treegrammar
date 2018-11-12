@@ -70,21 +70,39 @@ class StateMachine {
         completeTree.removeNode(root);
       }
 
-    } else if (root instanceof ZeroOrMoreNode || root instanceof OneOrMoreNode) {
+    } else if (root instanceof ZeroOrMoreNode) {
       List<Node> childNodes = new ArrayList<>(completeTree.children.get(root));
       if (childNodes.size() == 1 && childNodes.get(0) instanceof NonTerminalMarkupNode) {
         completeTree.removeSubTreeWithRootNode(root);
       } else {
-        childNodes.stream().filter(NonTerminalMarkupNode.class::isInstance).forEach(completeTree::removeNode);
+        childNodes.stream()
+            .filter(NonTerminalMarkupNode.class::isInstance)
+            .forEach(completeTree::removeNode);
+        completeTree.removeNode(root);
+      }
+
+    } else if (root instanceof OneOrMoreNode) {
+      List<Node> childNodes = new ArrayList<>(completeTree.children.get(root));
+      if (childNodes.size() == 1 && childNodes.get(0) instanceof NonTerminalMarkupNode) {
+        completeTree.removeSubTreeWithRootNode(root);
+        throw new RuntimeException(format("{0} should have at least one NonTerminal, but has none.", root));
+      } else {
+        childNodes.stream()
+            .filter(NonTerminalMarkupNode.class::isInstance)
+            .forEach(completeTree::removeNode);
         completeTree.removeNode(root);
       }
 
     } else if (root instanceof NonTerminalMarkupNode) {
       Node parentNode = completeTree.parents.get(root);
       if (parentNode instanceof ZeroOrOneNode
-          || parentNode instanceof ZeroOrMoreNode
-      ) {
+          || parentNode instanceof ZeroOrMoreNode) {
         completeTree.removeSubTreeWithRootNode(parentNode);
+
+      } else if (parentNode instanceof OneOrMoreNode) {
+        completeTree.removeNode(root);
+        completeTree.removeNode(parentNode);
+
       } else {
         throw new RuntimeException(format("unresolved NonTerminal: {0}", root));
       }

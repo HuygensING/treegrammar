@@ -247,13 +247,13 @@ class ValidationTest {
   }
 
   @Test
-  void testOneOrMoreRuleWithInvalidInput() throws XMLStreamException {
+  void testOneOrMoreRuleWithInvalidInput() {
     XMLValidatorUsingTreeGrammars validator = oneOrMoreElementsValidator();
     try {
       validator.parse("<elements></elements>");
       fail("Expected an exception");
     } catch (Exception e) {
-      assertThat(e).hasMessage("something");
+      assertThat(e).hasMessage("ELEMENT* should have at least one NonTerminal, but has none.");
     }
   }
 
