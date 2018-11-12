@@ -21,7 +21,7 @@ import static java.util.stream.Collectors.joining;
 public class Tree<T> {
   public final T root;
   // Every node in the tree has a list of children
-  final Map<T, List<T>> children;
+  public final Map<T, List<T>> children;
   // Every node has one parent; this map maps the node to the parent; so reverse
   public final Map<T, T> parents;
 

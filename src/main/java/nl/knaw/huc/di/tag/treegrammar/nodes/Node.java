@@ -13,4 +13,6 @@ public interface Node {
   Stream<NonTerminalNode> nonTerminalNodeStream();
 
   void postProcess(Tree<Node> completeTree, List<Node> rootChildren);
+
+  List<Node> firstNonTerminals(Tree<Node> completeTree);
 }

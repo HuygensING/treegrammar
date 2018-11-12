@@ -149,7 +149,7 @@ class StateMachine {
       list.add(root);
     } else {
       List<Node> firstNonTerminals = completeTree.getRootChildren().stream()
-          .map(this::firstNonTerminals)
+          .map(n -> n.firstNonTerminals(completeTree))
           .filter(l -> !l.isEmpty())
           .findFirst()
           .orElse(emptyList());
@@ -191,43 +191,6 @@ class StateMachine {
     return rootNode == null
         ? null
         : rootNode.copy();
-  }
-
-  private List<Node> firstNonTerminals(final Node node) {
-    final List<Node> list = new ArrayList<>();
-    if (node instanceof NonTerminalMarkupNode || node instanceof StartNode || node instanceof AnyTextNode) {
-      list.add(node);
-
-    } else if (node instanceof TagNode
-        || node instanceof GroupNode
-        || node instanceof ZeroOrOneNode
-        || node instanceof ZeroOrMoreNode
-        || node instanceof OneOrMoreNode) {
-      completeTree.children.get(node)
-          .stream()
-          .map(this::firstNonTerminals)
-          .filter(l -> !l.isEmpty())
-          .findFirst()
-          .ifPresent(list::addAll);
-
-    } else if (node instanceof ChoiceNode) {
-      completeTree.children.get(node)
-          .stream()
-          .map(this::firstNonTerminals)
-          .filter(l -> !l.isEmpty())
-          .forEach(list::addAll);
-    }
-    return list;
-  }
-
-  private List<NonTerminalNode> nonTerminals(final Tree<Node> nodeTree) {
-    List<Node> treeNodes = new ArrayList<>();
-    treeNodes.add(nodeTree.root);
-    treeNodes.addAll(nodeTree.getRootChildren());
-    return treeNodes.stream()
-        .filter(NonTerminalNode.class::isInstance)
-        .map(NonTerminalNode.class::cast)
-        .collect(toList());
   }
 
 }

@@ -2,6 +2,7 @@ package nl.knaw.huc.di.tag.treegrammar.nodes;
 
 import nl.knaw.huc.di.tag.treegrammar.Tree;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -39,7 +40,11 @@ public class NonTerminalMarkupNode implements NonTerminalNode {
     } else {
       throw new RuntimeException(format("unresolved NonTerminal: {0}", this));
     }
+  }
 
+  @Override
+  public List<Node> firstNonTerminals(Tree<Node> completeTree) {
+    return Collections.singletonList(this);
   }
 
   @Override

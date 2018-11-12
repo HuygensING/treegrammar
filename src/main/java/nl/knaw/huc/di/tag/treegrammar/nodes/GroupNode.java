@@ -2,6 +2,7 @@ package nl.knaw.huc.di.tag.treegrammar.nodes;
 
 import nl.knaw.huc.di.tag.treegrammar.Tree;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -29,6 +30,19 @@ public class GroupNode implements NonTerminalNode {
   public void postProcess(Tree<Node> completeTree, List<Node> rootChildren) {
     completeTree.removeNode(this);
   }
+
+  @Override
+  public List<Node> firstNonTerminals(Tree<Node> completeTree) {
+    List<Node> list = new ArrayList<>();
+    completeTree.children.get(this)
+        .stream()
+        .map(n -> n.firstNonTerminals(completeTree))
+        .filter(l -> !l.isEmpty())
+        .findFirst()
+        .ifPresent(list::addAll);
+    return list;
+  }
+
 
   @Override
   public Node copy() {

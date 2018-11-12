@@ -2,6 +2,7 @@ package nl.knaw.huc.di.tag.treegrammar.nodes;
 
 import nl.knaw.huc.di.tag.treegrammar.Tree;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -24,6 +25,11 @@ public class StartNode implements NonTerminalNode {
   @Override
   public void postProcess(Tree<Node> completeTree, List<Node> rootChildren) {
     //TODO
+  }
+
+  @Override
+  public List<Node> firstNonTerminals(Tree<Node> completeTree) {
+    return Collections.singletonList(this);
   }
 
   @Override

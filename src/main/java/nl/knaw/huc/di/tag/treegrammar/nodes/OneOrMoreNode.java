@@ -9,7 +9,6 @@ import java.util.stream.Stream;
 import static java.text.MessageFormat.format;
 
 public class OneOrMoreNode implements Node {
-  int count = 0;
   private final Node childNode;
 
   public OneOrMoreNode(final Node childNode) {
@@ -44,7 +43,18 @@ public class OneOrMoreNode implements Node {
           .forEach(completeTree::removeNode);
       completeTree.removeNode(this);
     }
+  }
 
+  @Override
+  public List<Node> firstNonTerminals(Tree<Node> completeTree) {
+    List<Node> list = new ArrayList<>();
+    completeTree.children.get(this)
+        .stream()
+        .map(n -> n.firstNonTerminals(completeTree))
+        .filter(l -> !l.isEmpty())
+        .findFirst()
+        .ifPresent(list::addAll);
+    return list;
   }
 
   @Override

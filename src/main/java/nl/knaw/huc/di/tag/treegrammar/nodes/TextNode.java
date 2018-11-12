@@ -5,6 +5,8 @@ import nl.knaw.huc.di.tag.treegrammar.Tree;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static java.util.Collections.emptyList;
+
 /**
  * Created by ronalddekker on 28/09/18.
  */
@@ -29,6 +31,11 @@ public class TextNode implements TerminalNode {
   @Override
   public void postProcess(Tree<Node> completeTree, List<Node> rootChildren) {
 
+  }
+
+  @Override
+  public List<Node> firstNonTerminals(Tree<Node> completeTree) {
+    return emptyList();
   }
 
   @Override

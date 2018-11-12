@@ -41,7 +41,18 @@ public class ZeroOrMoreNode implements Node {
           .forEach(completeTree::removeNode);
       completeTree.removeNode(this);
     }
+  }
 
+  @Override
+  public List<Node> firstNonTerminals(Tree<Node> completeTree) {
+    List<Node> list = new ArrayList<>();
+    completeTree.children.get(this)
+        .stream()
+        .map(n -> n.firstNonTerminals(completeTree))
+        .filter(l -> !l.isEmpty())
+        .findFirst()
+        .ifPresent(list::addAll);
+    return list;
   }
 
   @Override

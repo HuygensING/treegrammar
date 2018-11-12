@@ -40,7 +40,17 @@ public class ChoiceNode implements NonTerminalNode {
     } else {
       completeTree.removeNode(this);
     }
+  }
 
+  @Override
+  public List<Node> firstNonTerminals(Tree<Node> completeTree) {
+    final List<Node> list = new ArrayList<>();
+    completeTree.children.get(this)
+        .stream()
+        .map(n -> n.firstNonTerminals(completeTree))
+        .filter(l -> !l.isEmpty())
+        .forEach(list::addAll);
+    return list;
   }
 
   @Override
