@@ -48,11 +48,6 @@ public class NonTerminalMarkupNode implements NonTerminalNode {
   }
 
   @Override
-  public Node copy() {
-    return new NonTerminalMarkupNode(variableName);
-  }
-
-  @Override
   public String toString() {
     return variableName;
   }

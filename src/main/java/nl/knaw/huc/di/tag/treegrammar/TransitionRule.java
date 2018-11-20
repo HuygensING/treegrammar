@@ -1,13 +1,11 @@
 package nl.knaw.huc.di.tag.treegrammar;
 
-import nl.knaw.huc.di.tag.treegrammar.nodes.Node;
-import nl.knaw.huc.di.tag.treegrammar.nodes.NonTerminalMarkupNode;
-import nl.knaw.huc.di.tag.treegrammar.nodes.NonTerminalNode;
-import nl.knaw.huc.di.tag.treegrammar.nodes.TerminalNode;
+import nl.knaw.huc.di.tag.treegrammar.nodes.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -18,71 +16,90 @@ import static java.util.stream.Collectors.toList;
 // Een rule heeft een lefthandside (dat is een non terminal markup node
 // Een right hand side: that is een tree.
 class TransitionRule {
-  final NonTerminalNode lefthandside;
-  final Tree<Node> righthandside;
+  final NonTerminalNode leftHandSide;
+  final private Tree<Node> rightHandSide;
+  final private Supplier<Tree<Node>> rightHandSideSupplier;
 
-  public TransitionRule(NonTerminalNode lefthandside, Tree<Node> righthandside) {
-    this.lefthandside = lefthandside;
-    this.righthandside = righthandside;
+  public TransitionRule(NonTerminalNode lhs, Supplier<Tree<Node>> rhsSupplier) {
+    this.leftHandSide = lhs;
+    this.rightHandSide = rhsSupplier.get();
+    this.rightHandSideSupplier = rhsSupplier;
   }
 
-  public boolean lefthandsideIsApplicableFor(Node node) {
+  public Tree getRightHandSide() {
+    return rightHandSideSupplier.get();
+  }
+
+  public Supplier<Tree<Node>> getRightHandSideSupplier() {
+    return rightHandSideSupplier;
+  }
+
+  public boolean leftHandSideIsApplicableFor(Node node) {
     // LOG.info("Checking with "+lefthandside.tag+" and "+tag);
     // de lefthandside is een tree node zonder kinderen...
     // We kijken of de tag vergelijkbaar is
-    return lefthandside.matches(node);
+    return leftHandSide.matches(node);
   }
 
   public Optional<Node> firstNonTerminalNode() {
-    if (righthandside.root instanceof NonTerminalNode) {
-      return Optional.of(righthandside.root);
+    if (rightHandSide.root instanceof NonTerminalNode) {
+      return Optional.of(rightHandSide.root);
     }
-    return righthandside.getRootChildren()
+    return rightHandSide.getRootChildren()
         .stream()
         .filter(NonTerminalNode.class::isInstance)
         .findFirst();
   }
 
   boolean hasNoRHSTerminals() {
-    if (righthandside.root instanceof TerminalNode) {
+    if (rightHandSide.root instanceof TerminalNode) {
       return false;
     }
-    return righthandside.getRootChildren()
+    return rightHandSide.getRootChildren()
         .stream()
         .noneMatch(TerminalNode.class::isInstance);
   }
 
-  public NonTerminalNode lefthandsideNode() {
-    return lefthandside;
+  public NonTerminalNode leftHandSideNode() {
+    return leftHandSide;
   }
 
   public Stream<NonTerminalMarkupNode> righthandsideNonTerminalMarkupNodes() {
     List<Node> list = new ArrayList<>();
-    if (righthandside.root instanceof NonTerminalMarkupNode) {
-      list.add(righthandside.root);
+    if (rightHandSide.root instanceof NonTerminalMarkupNode) {
+      list.add(rightHandSide.root);
     }
-    list.addAll(righthandside.getRootChildren());
+    list.addAll(rightHandSide.getRootChildren());
     return list.stream()
         .flatMap(Node::nonTerminalNodeStream)
         .filter(NonTerminalMarkupNode.class::isInstance)
         .map(NonTerminalMarkupNode.class::cast);
   }
 
-  @Override
-  public String toString() {
-    return lefthandside + " => " + righthandside;
-  }
-
-  public List<NonTerminalNode> righthandsideNonTerminals() {
+  public List<NonTerminalNode> rightHandSideNonTerminals() {
     List<Node> list = new ArrayList<>();
-    if (righthandside.root instanceof NonTerminalMarkupNode) {
-      list.add(righthandside.root);
+    if (rightHandSide.root instanceof NonTerminalMarkupNode) {
+      list.add(rightHandSide.root);
     }
-    list.addAll(righthandside.getRootChildren());
+    list.addAll(rightHandSide.getRootChildren());
     return list.stream()
         .filter(NonTerminalNode.class::isInstance)
         .map(NonTerminalNode.class::cast)
         .collect(toList());
+  }
+
+  boolean isTerminating() {
+    List<Node> rootChildren = rightHandSide.getRootChildren();
+    return rightHandSide.root instanceof TagNode
+        && (rootChildren.isEmpty()
+        || (rootChildren.size() == 1
+        && rootChildren.get(0) instanceof AnyTextNode
+    ));
+  }
+
+  @Override
+  public String toString() {
+    return leftHandSide + " => " + rightHandSide;
   }
 
 }

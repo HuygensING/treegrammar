@@ -8,8 +8,6 @@ import java.util.stream.Stream;
 public interface Node {
   boolean matches(Node node);
 
-  Node copy();
-
   Stream<NonTerminalNode> nonTerminalNodeStream();
 
   void postProcess(Tree<Node> completeTree, List<Node> rootChildren);

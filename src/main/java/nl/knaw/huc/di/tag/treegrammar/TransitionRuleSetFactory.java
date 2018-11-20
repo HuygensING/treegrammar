@@ -11,12 +11,17 @@ import nl.knaw.huc.di.tag.treegrammar.tgs.TGSParser.TransitionruleContext;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 import static java.util.stream.Collectors.*;
 
 public class TransitionRuleSetFactory {
+
+  private static final Logger LOG = LoggerFactory.getLogger(TransitionRuleSetFactory.class);
 
   public List<TransitionRule> fromTGS(String tgs) {
     CharStream stream = CharStreams.fromString(tgs);
@@ -36,7 +41,7 @@ public class TransitionRuleSetFactory {
 
   private TransitionRule toTransitionRule(final TransitionruleContext transitionruleContext) {
     final NonTerminalNode lhs = toLHS(transitionruleContext.lhs());
-    final Tree<Node> rhs = toRHS(transitionruleContext.rhs());
+    final Supplier<Tree<Node>> rhs = toRHSSupplier(transitionruleContext.rhs());
     return new TransitionRule(lhs, rhs);
   }
 
@@ -46,17 +51,18 @@ public class TransitionRuleSetFactory {
         : new NonTerminalMarkupNode(lhs.nonTerminalMarkup().getText());
   }
 
-  private Tree<Node> toRHS(final RhsContext rhs) {
-    final Node root = toNode(rhs.root());
-    final List<Node> children = new ArrayList<>();
-    final Map<Node, List<Node>> subTrees = new HashMap<>();
-    rhs.child().forEach(c ->
-        handleChildContext(c, children, subTrees)
-    );
-    final Tree<Node> rhsTree = new Tree<>(root, children);
-    subTrees.forEach((r, c) -> c.forEach(n -> rhsTree.connect(r, n)));
-
-    return rhsTree;
+  private Supplier<Tree<Node>> toRHSSupplier(final RhsContext rhs) {
+    return () -> {
+      final Node root = toNode(rhs.root());
+      final List<Node> children = new ArrayList<>();
+      final Map<Node, List<Node>> subTrees = new HashMap<>();
+      rhs.child().forEach(c ->
+          handleChildContext(c, children, subTrees)
+      );
+      final Tree<Node> rhsTree = new Tree<>(root, children);
+      subTrees.forEach((r, c) -> c.forEach(n -> rhsTree.connect(r, n)));
+      return rhsTree;
+    };
   }
 
   private void handleChildContext(final TGSParser.ChildContext c, final List<Node> children, final Map<Node, List<Node>> subTrees) {
@@ -211,7 +217,7 @@ public class TransitionRuleSetFactory {
     detectNonTerminalsWithMultipleRules(ruleSet);
 
     List<String> lhsNonTerminals = ruleSet.stream()
-        .map(TransitionRule::lefthandsideNode)
+        .map(TransitionRule::leftHandSideNode)
         .map(Object::toString)
         .collect(toList());
 
@@ -225,7 +231,7 @@ public class TransitionRuleSetFactory {
     final Set<String> nonTerminalsWithRule = new HashSet<>();
 
     ruleSet.forEach(r -> {
-      String lhs = r.lefthandside.toString();
+      String lhs = r.leftHandSide.toString();
       if (nonTerminalsWithRule.contains(lhs)) {
         nonTerminalsWithMultipleRules.add(lhs);
       } else {
@@ -268,7 +274,7 @@ public class TransitionRuleSetFactory {
     // calculate which nonterminals are connected through the transition rules
     Map<String, Set<String>> nonTerminalConnections = new HashMap<>();
     ruleSet.forEach(r -> {
-      String key = r.lefthandside.toString();
+      String key = r.leftHandSide.toString();
       nonTerminalConnections.putIfAbsent(key, new HashSet<>());
       Set<String> values = nonTerminalConnections.get(key);
       r.righthandsideNonTerminalMarkupNodes()
@@ -280,8 +286,8 @@ public class TransitionRuleSetFactory {
     // so first find the lhs non-terminals of the terminating rules
     // terminating rules have a tagnode as root and either no children, or just 1 AnyText node
     List<String> nonTerminalsWithTerminatingRule = ruleSet.stream()
-        .filter(TransitionRuleSetFactory::isTerminating)
-        .map(r -> r.lefthandside)
+        .filter(TransitionRule::isTerminating)
+        .map(r -> r.leftHandSide)
         .map(Object::toString)
         .collect(toList());
 
@@ -298,7 +304,7 @@ public class TransitionRuleSetFactory {
     }
     if (!nonTerminalsWithRules.isEmpty()) {
       String offendingRules = ruleSet.stream()
-          .filter(r -> nonTerminalsWithRules.contains(r.lefthandside.toString()))
+          .filter(r -> nonTerminalsWithRules.contains(r.leftHandSide.toString()))
           .map(Object::toString)
           .collect(joining("\n"));
       String head = nonTerminalsWithRules.size() == 1
@@ -329,7 +335,7 @@ public class TransitionRuleSetFactory {
     unvisitedNonTerminals.removeAll(visited);
     if (!unvisitedNonTerminals.isEmpty()) {
       List<String> unreachedRules = ruleSet.stream()
-          .filter(r -> unvisitedNonTerminals.contains(r.lefthandside.toString()))
+          .filter(r -> unvisitedNonTerminals.contains(r.leftHandSide.toString()))
           .map(Object::toString)
           .collect(toList());
       String head = unreachedRules.size() == 1
@@ -338,15 +344,6 @@ public class TransitionRuleSetFactory {
       String message = head + " unreachable from the start node.:\n" + String.join("\n", unreachedRules);
       throw new TransitionRuleSetValidationException(message);
     }
-  }
-
-  private static boolean isTerminating(TransitionRule transitionRule) {
-    List<Node> rootChildren = transitionRule.righthandside.getRootChildren();
-    return transitionRule.righthandside.root instanceof TagNode
-        && (rootChildren.isEmpty()
-        || (rootChildren.size() == 1
-        && rootChildren.get(0) instanceof AnyTextNode
-    ));
   }
 
 }

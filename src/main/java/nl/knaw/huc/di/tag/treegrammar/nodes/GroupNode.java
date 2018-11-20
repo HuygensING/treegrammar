@@ -45,11 +45,6 @@ public class GroupNode implements NonTerminalNode {
 
 
   @Override
-  public Node copy() {
-    return this;
-  } //TODO: copy elements?
-
-  @Override
   public String toString() {
     return elements.stream()
         .map(Object::toString)
