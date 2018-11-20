@@ -21,11 +21,6 @@ public class ZeroOrOneNode implements Node {
   }
 
   @Override
-  public Node copy() {
-    return new ZeroOrOneNode(childNode.copy());
-  }
-
-  @Override
   public Stream<NonTerminalNode> nonTerminalNodeStream() {
     return childNode.nonTerminalNodeStream();
   }
@@ -37,7 +32,6 @@ public class ZeroOrOneNode implements Node {
     } else {
       completeTree.removeNode(this);
     }
-
   }
 
   @Override

@@ -47,13 +47,7 @@ public class TagNode implements TerminalNode {
   }
 
   @Override
-  public Node copy() {
-    return new TagNode(tag);
-  }
-
-  @Override
   public String toString() {
     return tag;
   }
-
 }

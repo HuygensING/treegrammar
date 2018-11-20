@@ -34,11 +34,6 @@ public class AnyTextNode implements NonTerminalNode {
   }
 
   @Override
-  public Node copy() {
-    return this;
-  }
-
-  @Override
   public String toString() {
     return CIPHER;
   }

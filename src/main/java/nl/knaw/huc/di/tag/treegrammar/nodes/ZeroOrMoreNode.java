@@ -21,11 +21,6 @@ public class ZeroOrMoreNode implements Node {
   }
 
   @Override
-  public Node copy() {
-    return new ZeroOrMoreNode(childNode.copy());
-  }
-
-  @Override
   public Stream<NonTerminalNode> nonTerminalNodeStream() {
     return childNode.nonTerminalNodeStream();
   }

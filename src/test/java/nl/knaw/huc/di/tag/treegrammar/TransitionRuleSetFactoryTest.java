@@ -34,9 +34,9 @@ class TransitionRuleSetFactoryTest {
     LOG.info("transitionRules={}", transitionRules);
     assertThat(transitionRules).hasSize(1);
     TransitionRule transitionRule = transitionRules.get(0);
-    assertThat(transitionRule.lefthandside).isInstanceOf(NonTerminalMarkupNode.class);
-    assertThat((NonTerminalMarkupNode) transitionRule.lefthandside).extracting("variableName").contains("NAME");
-    Tree<Node> righthandside = transitionRule.righthandside;
+    assertThat(transitionRule.leftHandSide).isInstanceOf(NonTerminalMarkupNode.class);
+    assertThat((NonTerminalMarkupNode) transitionRule.leftHandSide).extracting("variableName").contains("NAME");
+    Tree<Node> righthandside = transitionRule.getRightHandSideSupplier().get();
     // expecting (artist (choice(group(FIRST LAST) ARTIST_NAME)))
     Node root = righthandside.root;
     Node expectedRoot = new TagNode("name");
@@ -64,15 +64,15 @@ class TransitionRuleSetFactoryTest {
     String input = "ROOT => root[MARKUP]";
     TransitionRule tr = parseTransitionRule(input);
 
-    String actualLHS = tr.lefthandside.toString();
+    String actualLHS = tr.leftHandSide.toString();
     String expectedLHS = new NonTerminalMarkupNode("ROOT").toString();
     assertThat(actualLHS).isEqualTo(expectedLHS);
 
-    String actualRHSRoot = tr.righthandside.root.toString();
+    String actualRHSRoot = tr.getRightHandSide().root.toString();
     String expectedRHSRoot = new TagNode("root").toString();
     assertThat(actualRHSRoot).isEqualTo(expectedRHSRoot);
 
-    List<Node> rhsChildren = tr.righthandside.getRootChildren();
+    List<Node> rhsChildren = tr.getRightHandSide().getRootChildren();
     assertThat(rhsChildren).hasSize(1);
     Node expectedRHSChild = new NonTerminalMarkupNode("MARKUP");
     assertThat(rhsChildren.get(0).toString()).isEqualTo(expectedRHSChild.toString());
@@ -83,15 +83,15 @@ class TransitionRuleSetFactoryTest {
     String input = "MARKUP => markup[_]";
     TransitionRule tr = parseTransitionRule(input);
 
-    String actualLHS = tr.lefthandside.toString();
+    String actualLHS = tr.leftHandSide.toString();
     String expectedLHS = new NonTerminalMarkupNode("MARKUP").toString();
     assertThat(actualLHS).isEqualTo(expectedLHS);
 
-    String actualRHSRoot = tr.righthandside.root.toString();
+    String actualRHSRoot = tr.getRightHandSide().root.toString();
     String expectedRHSRoot = new TagNode("markup").toString();
     assertThat(actualRHSRoot).isEqualTo(expectedRHSRoot);
 
-    List<Node> rhsChildren = tr.righthandside.getRootChildren();
+    List<Node> rhsChildren = tr.getRightHandSide().getRootChildren();
     assertThat(rhsChildren).hasSize(1);
     Node expectedRHSChild = new AnyTextNode();
     String actual = rhsChildren.get(0).toString();

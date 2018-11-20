@@ -22,11 +22,6 @@ public class OneOrMoreNode implements Node {
   }
 
   @Override
-  public Node copy() {
-    return new OneOrMoreNode(childNode.copy());
-  }
-
-  @Override
   public Stream<NonTerminalNode> nonTerminalNodeStream() {
     return childNode.nonTerminalNodeStream();
   }

@@ -39,11 +39,6 @@ public class TextNode implements TerminalNode {
   }
 
   @Override
-  public Node copy() {
-    return new TextNode(content);
-  }
-
-  @Override
   public String toString() {
     return "\"" + content + "\"";
   }
