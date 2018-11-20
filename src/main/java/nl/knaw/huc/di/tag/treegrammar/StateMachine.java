@@ -5,7 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.stream.Location;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import static java.text.MessageFormat.format;
@@ -28,6 +31,7 @@ class StateMachine {
   private Tree<Node> completeTree; // tree die we aan het opbouwen zijn
   //  private final List<TransitionRule> rules = new ArrayList<>();
   private final Map<NonTerminalNode, Supplier<Tree<Node>>> nodeReplacementMap = new HashMap<>();
+  private final Map<NonTerminalNode, Node> nodeReplacementRootMap = new HashMap<>();
 
   StateMachine() {
     StartNode startNode = new StartNode();
@@ -59,6 +63,7 @@ class StateMachine {
   void addTransitionRule(TransitionRule transitionRule) {
 //    this.rules.add(transitionRule);
     nodeReplacementMap.put(transitionRule.leftHandSide, transitionRule.getRightHandSideSupplier());
+    nodeReplacementRootMap.put(transitionRule.leftHandSide, (Node) transitionRule.getRightHandSide().root);
   }
 
   void processInput(Node inputNode, final Location location) {
@@ -77,24 +82,16 @@ class StateMachine {
     AnyTextNode anyTextNode = new AnyTextNode();
     if (nextNonTerminals.contains(anyTextNode) && inputNode instanceof TextNode) {
       nodeReplacementMap.put(anyTextNode, () -> new Tree<>(inputNode));
+      nodeReplacementRootMap.put(anyTextNode, inputNode);
     }
-    List<Supplier<Tree<Node>>> possibleReplacementSuppliers = nextNonTerminals.stream()
-        .map(nodeReplacementMap::get)
-        .filter(Objects::nonNull)
+    List<Node> replaceableNodes = nextNonTerminals.stream()
+        .filter(nodeReplacementMap::containsKey)
         .collect(toList());
-    final List<Tree<Node>> possibleReplacements = possibleReplacementSuppliers.stream()
-        .map(Supplier::get)
-        .collect(toList());
-    LOG.info("possible replacements={}", possibleReplacements);
-
-    List<Node> acceptableNodes = possibleReplacements.stream()
-        .map(t -> t.root)
-        .collect(toList());
-    LOG.info("acceptable nodes={}", acceptableNodes);
 
     LOG.info("inputNode={}", inputNode);
-    final List<Supplier<Tree<Node>>> acceptableReplacementSuppliers = possibleReplacementSuppliers.stream()
-        .filter(t -> t.get().root.matches(inputNode))
+    final List<Supplier<Tree<Node>>> acceptableReplacementSuppliers = replaceableNodes.stream()
+        .filter(t -> nodeReplacementRootMap.containsKey(t) && nodeReplacementRootMap.get(t).matches(inputNode))
+        .map(nodeReplacementMap::get)
         .collect(toList());
     LOG.info("acceptable replacements={}", acceptableReplacementSuppliers);
 
@@ -111,6 +108,16 @@ class StateMachine {
       }
     }
     if (nodeToReplace == null) {
+      final List<Tree<Node>> possibleReplacements = replaceableNodes.stream()
+          .map(nodeReplacementMap::get)
+          .map(Supplier::get)
+          .collect(toList());
+      LOG.info("possible replacements={}", possibleReplacements);
+
+      List<Node> acceptableNodes = possibleReplacements.stream()
+          .map(t -> t.root)
+          .collect(toList());
+      LOG.info("acceptable nodes={}", acceptableNodes);
       if (acceptableNodes.isEmpty()) {
         throw new RuntimeException(format("{0}: Unexpected node: {1}", position, inputNode));
       }
@@ -140,6 +147,7 @@ class StateMachine {
     });
 
     nodeReplacementMap.remove(anyTextNode);
+    nodeReplacementRootMap.remove(anyTextNode);
   }
 
   private String position(final Location location) {

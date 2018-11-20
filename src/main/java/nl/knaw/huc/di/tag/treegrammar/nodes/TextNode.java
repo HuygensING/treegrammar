@@ -30,7 +30,6 @@ public class TextNode implements TerminalNode {
 
   @Override
   public void postProcess(Tree<Node> completeTree, List<Node> rootChildren) {
-
   }
 
   @Override
@@ -41,5 +40,16 @@ public class TextNode implements TerminalNode {
   @Override
   public String toString() {
     return "\"" + content + "\"";
+  }
+
+  @Override
+  public int hashCode() {
+    return content.hashCode();
+  }
+
+  @Override
+  public boolean equals(final Object obj) {
+    return obj instanceof TextNode
+        && ((TextNode) obj).content.equals(content);
   }
 }

@@ -61,7 +61,6 @@ public class TransitionRuleSetFactory {
       );
       final Tree<Node> rhsTree = new Tree<>(root, children);
       subTrees.forEach((r, c) -> c.forEach(n -> rhsTree.connect(r, n)));
-      LOG.info("rhsTree={}", rhsTree);
       return rhsTree;
     };
   }
