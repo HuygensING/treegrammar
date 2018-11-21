@@ -18,7 +18,7 @@ import static java.util.stream.Collectors.joining;
  * This makes it easier to specify the root.
  * Also it makes it easier to merge two trees etc.
  */
-public class Tree<T> {
+public class Tree<T> implements Cloneable {
   public final T root;
   // Every node in the tree has a list of children
   public final Map<T, List<T>> children;
@@ -127,8 +127,9 @@ public class Tree<T> {
     parents.remove(child, parent);
   }
 
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
-  protected Tree<T> clone() {
+  final protected Tree<T> clone() {
     final Tree<T> clone = new Tree<>(this.root, emptyList());
     this.children.forEach((parent, children) ->
         children.forEach(child ->
