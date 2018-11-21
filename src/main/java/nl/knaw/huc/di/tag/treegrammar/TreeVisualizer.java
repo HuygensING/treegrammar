@@ -23,4 +23,23 @@ class TreeVisualizer {
     );
   }
 
+  public static <T> String asSExpression(Tree<T> tree, boolean format) {
+    StringBuilder stringBuilder = new StringBuilder();
+    String indent = format ? "\n  " : " ";
+    stringBuilder.append("(").append(tree.root);
+    appendSExpressionChildren(stringBuilder, indent, tree, tree.root, format);
+    return stringBuilder.append(")").toString();
+  }
+
+  private static <T> void appendSExpressionChildren(StringBuilder stringBuilder, String indent, Tree<T> tree, T parent, boolean format) {
+    String newIndent = format ? indent + "  " : " ";
+    List<T> children = tree.children.getOrDefault(parent, new ArrayList<>());
+    children.forEach(child -> {
+          stringBuilder.append(indent).append("(").append(child);
+          appendSExpressionChildren(stringBuilder, newIndent, tree, child, format);
+          stringBuilder.append(")");
+        }
+    );
+  }
+
 }

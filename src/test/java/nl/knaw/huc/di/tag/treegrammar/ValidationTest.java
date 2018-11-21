@@ -262,6 +262,8 @@ class ValidationTest {
     String asText = TreeVisualizer.asText(tree);
     LOG.info("\n{}", asText);
     assertThat(asText).isEqualTo(expected);
+    String sExpression = TreeVisualizer.asSExpression(tree, false);
+    LOG.info("\ns-expression={}", sExpression);
   }
 
   private TransitionRule parseTransitionRule(final String input) {
