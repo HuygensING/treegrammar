@@ -43,20 +43,18 @@ public class Tree<T> {
     }
   }
 
-  void mergeTreeIntoCurrentTree(T nodeToReplace, Tree<T> toMerge) {
+  Tree<T> replaceNodeWithTree(T nodeToReplace, Tree<T> toMerge) {
+    final Tree<T> newTree = this.clone();
     // Copy the children map from the tree container to merge, and connect the parent of the node to replace
     // with the root of the tree to merge
-//    this.children.remove(nodeToReplace);
-    this.children.putAll(toMerge.children);
-//    this.parents.remove(toMerge);
-    this.parents.putAll(toMerge.parents);
-    T parent = parents.get(nodeToReplace);
+    newTree.children.putAll(toMerge.children);
+    newTree.parents.putAll(toMerge.parents);
+    T parent = newTree.parents.get(nodeToReplace);
     if (parent == null) {
       throw new RuntimeException("nodeToReplace " + nodeToReplace + " not found in this tree.parents!");
     }
-    replaceChild(parent, nodeToReplace, toMerge.root);
-//    connect(parent, toMerge.root);
-//    disconnect(parent, nodeToReplace);
+    newTree.replaceChild(parent, nodeToReplace, toMerge.root);
+    return newTree;
   }
 
   List<T> getRootChildren() {
@@ -129,4 +127,14 @@ public class Tree<T> {
     parents.remove(child, parent);
   }
 
+  @Override
+  protected Tree<T> clone() {
+    final Tree<T> clone = new Tree<>(this.root, emptyList());
+    this.children.forEach((parent, children) ->
+        children.forEach(child ->
+            clone.connect(parent, child)
+        )
+    );
+    return clone;
+  }
 }

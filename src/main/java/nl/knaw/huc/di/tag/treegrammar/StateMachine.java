@@ -193,7 +193,10 @@ class StateMachine {
     if (nonTerminalNode == completeTree.root) {
       completeTree = replacementTree;
     } else {
-      completeTree.mergeTreeIntoCurrentTree(nonTerminalNode, replacementTree);
+      final Tree<Node> newTree = completeTree.replaceNodeWithTree(nonTerminalNode, replacementTree);
+//      LOG.info("original={}", TreeVisualizer.asSExpression(completeTree, false));
+//      LOG.info("new     ={}", TreeVisualizer.asSExpression(newTree, false));
+      completeTree = newTree;
     }
   }
 
