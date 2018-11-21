@@ -34,10 +34,10 @@ class StateMachine {
   private final Map<NonTerminalNode, NodeReplacementInfo> nodeReplacementInfoMap = new HashMap<>();
 
   class NodeReplacementInfo {
-    public Supplier<Tree<Node>> replacementSupplier;
-    public Function<Node, Boolean> nodeMatcher;
+    Supplier<Tree<Node>> replacementSupplier;
+    Function<Node, Boolean> nodeMatcher;
 
-    public boolean matches(final Node inputNode) {
+    boolean matches(final Node inputNode) {
       return nodeMatcher.apply(inputNode);
     }
   }
@@ -145,8 +145,7 @@ class StateMachine {
     Node parent = completeTree.parents.get(nodeToReplace);
     boolean parentIsXOrMoreNode = (parent instanceof ZeroOrMoreNode || parent instanceof OneOrMoreNode);
     LOG.info("action: replace node ({}) with tree ({})", nodeToReplace, replacementTree);
-    Tree<Node> rhsCopy = cloneTree(replacementTree);
-    replaceNodeWithTree(nodeToReplace, rhsCopy);
+    replaceNodeWithTree(nodeToReplace, replacementTree);
     if (parentIsXOrMoreNode) {
       completeTree.connect(parent, nodeToReplace);
     }
@@ -190,21 +189,6 @@ class StateMachine {
     } else {
       completeTree.mergeTreeIntoCurrentTree(nonTerminalNode, replacementTree);
     }
-  }
-
-  private Tree<Node> cloneTree(final Tree<Node> replacementTree) {
-    final Node rootCopy = replacementTree.root;
-    List<Node> rootChildren = replacementTree.getRootChildren();
-    final List<Node> rootChildrenCopy = new ArrayList<>(rootChildren);
-    Tree<Node> nodeTree = new Tree<>(rootCopy, rootChildrenCopy);
-    replacementTree.children.entrySet().stream()
-        .filter(e -> e.getKey() != replacementTree.root)
-        .forEach(e -> {
-          final Node parent = e.getKey();
-          e.getValue()
-              .forEach(child -> nodeTree.connect(parent, child));
-        });
-    return nodeTree;
   }
 
 }
