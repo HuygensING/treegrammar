@@ -5,6 +5,7 @@ import nl.knaw.huc.di.tag.treegrammar.nodes.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -102,4 +103,7 @@ class TransitionRule {
     return leftHandSide + " => " + rightHandSide;
   }
 
+  public Function<Node, Boolean> getNodeMatcher() {
+    return rightHandSide.root::matches;
+  }
 }

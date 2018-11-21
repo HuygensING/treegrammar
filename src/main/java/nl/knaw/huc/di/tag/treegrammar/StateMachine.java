@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static java.text.MessageFormat.format;
@@ -30,8 +31,16 @@ class StateMachine {
 
   private Tree<Node> completeTree; // tree die we aan het opbouwen zijn
   //  private final List<TransitionRule> rules = new ArrayList<>();
-  private final Map<NonTerminalNode, Supplier<Tree<Node>>> nodeReplacementMap = new HashMap<>();
-  private final Map<NonTerminalNode, Node> nodeReplacementRootMap = new HashMap<>();
+  private final Map<NonTerminalNode, NodeReplacementInfo> nodeReplacementInfoMap = new HashMap<>();
+
+  class NodeReplacementInfo {
+    public Supplier<Tree<Node>> replacementSupplier;
+    public Function<Node, Boolean> nodeMatcher;
+
+    public boolean matches(final Node inputNode) {
+      return nodeMatcher.apply(inputNode);
+    }
+  }
 
   StateMachine() {
     StartNode startNode = new StartNode();
@@ -62,8 +71,10 @@ class StateMachine {
 
   void addTransitionRule(TransitionRule transitionRule) {
 //    this.rules.add(transitionRule);
-    nodeReplacementMap.put(transitionRule.leftHandSide, transitionRule.getRightHandSideSupplier());
-    nodeReplacementRootMap.put(transitionRule.leftHandSide, (Node) transitionRule.getRightHandSide().root);
+    NodeReplacementInfo nri = new NodeReplacementInfo();
+    nri.replacementSupplier = transitionRule.getRightHandSideSupplier();
+    nri.nodeMatcher = transitionRule.getNodeMatcher();
+    nodeReplacementInfoMap.put(transitionRule.leftHandSide, nri);
   }
 
   void processInput(Node inputNode, final Location location) {
@@ -81,17 +92,20 @@ class StateMachine {
     LOG.info("nextNonTerminals={}", nextNonTerminals);
     AnyTextNode anyTextNode = new AnyTextNode();
     if (nextNonTerminals.contains(anyTextNode) && inputNode instanceof TextNode) {
-      nodeReplacementMap.put(anyTextNode, () -> new Tree<>(inputNode));
-      nodeReplacementRootMap.put(anyTextNode, inputNode);
+      NodeReplacementInfo nri = new NodeReplacementInfo();
+      nri.replacementSupplier = () -> new Tree<>(inputNode);
+      nri.nodeMatcher = inputNode::matches;
+      nodeReplacementInfoMap.put(anyTextNode, nri);
     }
     List<Node> replaceableNodes = nextNonTerminals.stream()
-        .filter(nodeReplacementMap::containsKey)
+        .filter(nodeReplacementInfoMap::containsKey)
         .collect(toList());
 
     LOG.info("inputNode={}", inputNode);
     final List<Supplier<Tree<Node>>> acceptableReplacementSuppliers = replaceableNodes.stream()
-        .filter(t -> nodeReplacementRootMap.containsKey(t) && nodeReplacementRootMap.get(t).matches(inputNode))
-        .map(nodeReplacementMap::get)
+        .filter(t -> nodeReplacementInfoMap.containsKey(t) && nodeReplacementInfoMap.get(t).matches(inputNode))
+        .map(nodeReplacementInfoMap::get)
+        .map(nri -> nri.replacementSupplier)
         .collect(toList());
     LOG.info("acceptable replacements={}", acceptableReplacementSuppliers);
 
@@ -99,7 +113,7 @@ class StateMachine {
     Tree<Node> replacementTree = null;
     List<Node> rejectedNonTerminalNodes = new ArrayList<>();
     for (Node n : nextNonTerminals) {
-      Supplier<Tree<Node>> treeSupplier = nodeReplacementMap.get(n);
+      Supplier<Tree<Node>> treeSupplier = nodeReplacementInfoMap.get(n).replacementSupplier;
       if (acceptableReplacementSuppliers.contains(treeSupplier)) {
         nodeToReplace = n;
         replacementTree = treeSupplier.get();
@@ -109,7 +123,8 @@ class StateMachine {
     }
     if (nodeToReplace == null) {
       final List<Tree<Node>> possibleReplacements = replaceableNodes.stream()
-          .map(nodeReplacementMap::get)
+          .map(nodeReplacementInfoMap::get)
+          .map(nri -> nri.replacementSupplier)
           .map(Supplier::get)
           .collect(toList());
       LOG.info("possible replacements={}", possibleReplacements);
@@ -146,8 +161,7 @@ class StateMachine {
       }
     });
 
-    nodeReplacementMap.remove(anyTextNode);
-    nodeReplacementRootMap.remove(anyTextNode);
+    nodeReplacementInfoMap.remove(anyTextNode);
   }
 
   private String position(final Location location) {
