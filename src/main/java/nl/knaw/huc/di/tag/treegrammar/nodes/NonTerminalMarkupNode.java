@@ -43,7 +43,7 @@ public class NonTerminalMarkupNode implements NonTerminalNode {
   }
 
   @Override
-  public List<Node> firstNonTerminals(Tree<Node> completeTree) {
+  public List<NonTerminalNode> firstNonTerminals(Tree<Node> completeTree) {
     return Collections.singletonList(this);
   }
 

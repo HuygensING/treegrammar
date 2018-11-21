@@ -72,7 +72,7 @@ public class ErrorListener implements ANTLRErrorListener {
     return !errors.isEmpty();
   }
 
-  public void addError(String messageTemplate, Object... messageArgs) {
+  private void addError(String messageTemplate, Object... messageArgs) {
     errors.add(format(messageTemplate, messageArgs));
   }
 

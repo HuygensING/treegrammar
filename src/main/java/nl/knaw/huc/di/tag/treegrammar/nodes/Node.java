@@ -12,5 +12,5 @@ public interface Node {
 
   void postProcess(Tree<Node> completeTree, List<Node> rootChildren);
 
-  List<Node> firstNonTerminals(Tree<Node> completeTree);
+  List<NonTerminalNode> firstNonTerminals(Tree<Node> completeTree);
 }

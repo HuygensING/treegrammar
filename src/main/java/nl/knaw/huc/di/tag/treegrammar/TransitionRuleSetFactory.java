@@ -331,7 +331,7 @@ public class TransitionRuleSetFactory {
     // but each nonterminal appears as lhs in at least 1 transition rule
     // and since we connected the nonterminals with all the nonterminals from all the rhs of all relevant transition rules, it's as if we followed all branches.
     // so transition rules with unvisited nonterminals as their lhs are transition rules that are unreachable from the start node
-    Set<String> unvisitedNonTerminals = new HashSet(nonTerminalConnections.keySet());
+    Set<String> unvisitedNonTerminals = new HashSet<>(nonTerminalConnections.keySet());
     unvisitedNonTerminals.removeAll(visited);
     if (!unvisitedNonTerminals.isEmpty()) {
       List<String> unreachedRules = ruleSet.stream()

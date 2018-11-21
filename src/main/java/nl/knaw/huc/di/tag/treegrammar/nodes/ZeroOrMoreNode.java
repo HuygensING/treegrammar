@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class ZeroOrMoreNode implements Node {
-  int count = 0;
   private final Node childNode;
 
   public ZeroOrMoreNode(final Node childNode) {
@@ -39,8 +38,8 @@ public class ZeroOrMoreNode implements Node {
   }
 
   @Override
-  public List<Node> firstNonTerminals(Tree<Node> completeTree) {
-    List<Node> list = new ArrayList<>();
+  public List<NonTerminalNode> firstNonTerminals(Tree<Node> completeTree) {
+    List<NonTerminalNode> list = new ArrayList<>();
     completeTree.children.get(this)
         .stream()
         .map(n -> n.firstNonTerminals(completeTree))

@@ -11,7 +11,7 @@ import static java.util.Collections.emptyList;
  * Created by ronalddekker on 28/09/18.
  */
 public class TextNode implements TerminalNode {
-  public final String content;
+  private final String content;
 
   public TextNode(String content) {
     this.content = content;
@@ -33,7 +33,7 @@ public class TextNode implements TerminalNode {
   }
 
   @Override
-  public List<Node> firstNonTerminals(Tree<Node> completeTree) {
+  public List<NonTerminalNode> firstNonTerminals(Tree<Node> completeTree) {
     return emptyList();
   }
 

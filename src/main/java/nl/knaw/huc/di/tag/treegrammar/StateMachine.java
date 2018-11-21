@@ -30,12 +30,16 @@ class StateMachine {
   private static final Logger LOG = LoggerFactory.getLogger(StateMachine.class);
 
   private Tree<Node> completeTree; // tree die we aan het opbouwen zijn
-  //  private final List<TransitionRule> rules = new ArrayList<>();
   private final Map<NonTerminalNode, NodeReplacementInfo> nodeReplacementInfoMap = new HashMap<>();
 
   class NodeReplacementInfo {
-    Supplier<Tree<Node>> replacementSupplier;
-    Function<Node, Boolean> nodeMatcher;
+    final Supplier<Tree<Node>> replacementSupplier;
+    final Function<Node, Boolean> nodeMatcher;
+
+    NodeReplacementInfo(Supplier<Tree<Node>> replacementSupplier, Function<Node, Boolean> nodeMatcher) {
+      this.replacementSupplier = replacementSupplier;
+      this.nodeMatcher = nodeMatcher;
+    }
 
     boolean matches(final Node inputNode) {
       return nodeMatcher.apply(inputNode);
@@ -71,9 +75,10 @@ class StateMachine {
 
   void addTransitionRule(TransitionRule transitionRule) {
 //    this.rules.add(transitionRule);
-    NodeReplacementInfo nri = new NodeReplacementInfo();
-    nri.replacementSupplier = transitionRule.getRightHandSideSupplier();
-    nri.nodeMatcher = transitionRule.getNodeMatcher();
+    NodeReplacementInfo nri = new NodeReplacementInfo(
+        transitionRule.getRightHandSideSupplier(),
+        transitionRule.getNodeMatcher()
+    );
     nodeReplacementInfoMap.put(transitionRule.leftHandSide, nri);
   }
 
@@ -88,16 +93,17 @@ class StateMachine {
     String position = position(location);
     LOG.info("\n\n* completeTree=\n{}", TreeVisualizer.asText(completeTree));
 
-    List<Node> nextNonTerminals = nextNonTerminals();
+    List<NonTerminalNode> nextNonTerminals = nextNonTerminals();
     LOG.info("nextNonTerminals={}", nextNonTerminals);
     AnyTextNode anyTextNode = new AnyTextNode();
     if (nextNonTerminals.contains(anyTextNode) && inputNode instanceof TextNode) {
-      NodeReplacementInfo nri = new NodeReplacementInfo();
-      nri.replacementSupplier = () -> new Tree<>(inputNode);
-      nri.nodeMatcher = inputNode::matches;
+      NodeReplacementInfo nri = new NodeReplacementInfo(
+          () -> new Tree<>(inputNode),
+          inputNode::matches
+      );
       nodeReplacementInfoMap.put(anyTextNode, nri);
     }
-    List<Node> replaceableNodes = nextNonTerminals.stream()
+    List<NonTerminalNode> replaceableNodes = nextNonTerminals.stream()
         .filter(nodeReplacementInfoMap::containsKey)
         .collect(toList());
 
@@ -112,7 +118,7 @@ class StateMachine {
     Node nodeToReplace = null;
     Tree<Node> replacementTree = null;
     List<Node> rejectedNonTerminalNodes = new ArrayList<>();
-    for (Node n : nextNonTerminals) {
+    for (NonTerminalNode n : nextNonTerminals) {
       Supplier<Tree<Node>> treeSupplier = nodeReplacementInfoMap.get(n).replacementSupplier;
       if (acceptableReplacementSuppliers.contains(treeSupplier)) {
         nodeToReplace = n;
@@ -167,13 +173,13 @@ class StateMachine {
     return "@" + location.getLineNumber() + "," + (location.getColumnNumber() - 1);
   }
 
-  private List<Node> nextNonTerminals() {
-    final List<Node> list = new ArrayList<>();
+  private List<NonTerminalNode> nextNonTerminals() {
+    final List<NonTerminalNode> list = new ArrayList<>();
     Node root = completeTree.root;
     if (root instanceof NonTerminalNode) {
-      list.add(root);
+      list.add((NonTerminalNode) root);
     } else {
-      List<Node> firstNonTerminals = completeTree.getRootChildren().stream()
+      List<NonTerminalNode> firstNonTerminals = completeTree.getRootChildren().stream()
           .map(n -> n.firstNonTerminals(completeTree))
           .filter(l -> !l.isEmpty())
           .findFirst()
